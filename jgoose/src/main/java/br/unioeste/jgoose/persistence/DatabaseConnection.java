@@ -28,6 +28,9 @@ public class DatabaseConnection {
      * Chame uma vez no início da aplicação (ex.: no main() ou ao abrir a MainView).
      */
     public static void criarSchema() {
+
+        System.out.println("[SQLite] Caminho do banco: " + new java.io.File("jgoose_rastreabilidade.db").getAbsolutePath());
+
         String sqlElemento =
             "CREATE TABLE IF NOT EXISTS elemento_rastreado (" +
             "  id INTEGER PRIMARY KEY AUTOINCREMENT," +
