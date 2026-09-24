@@ -10,38 +10,25 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.List;
 
-/**
- * Persiste um snapshot de TokensTraceability (gerado por TraceUCHorizontal,
- * TraceBPMNHorizontal, TraceIStarHorizontal etc.) no banco SQLite off-chain.
- *
- * Cada chamada cria uma nova linha em execucao_mapeamento e associa a ela
- * todos os elementos (stakeholders, requisitos, ...) e seus relacionamentos.
- */
 public class RastreabilidadeDAO {
 
-    /**
-     * @param tokens  o TokensTraceability já populado (ex.: TraceUCHorizontal.getLista()
-     *                ou HorizontalUseCaseTraceController.getTokensTraceability())
-     * @param origem  rótulo livre para identificar de onde veio o snapshot,
-     *                ex.: "UC Horizontal", "BPMN Horizontal", "iStar Vertical"
-     * @return o id da execução gravada, útil depois para o módulo de auditoria/hash
-     */
+    
+      @param tokens  
+      @param origem  
+                     
+      @return
+     
     public long salvar(TokensTraceability tokens, String origem) {
         try (Connection conn = DatabaseConnection.connect()) {
             conn.setAutoCommit(false);
 
             long execucaoId = criarExecucao(conn, origem);
 
-            // Escopo atual: Stakeholder x Requisitos, Requisitos x Stakeholder,
-            // Requisitos x Requisitos -> basta persistir estas duas listas.
+      
             salvarLista(conn, execucaoId, tokens.getStakeholders());
             salvarLista(conn, execucaoId, tokens.getRequisitos());
 
-            // Descomente se/quando quiser guardar as demais categorias também:
-            // salvarLista(conn, execucaoId, tokens.getAtorSistema());
-            // salvarLista(conn, execucaoId, tokens.getInformacaoOrg());
-            // salvarLista(conn, execucaoId, tokens.getInformcaoExterna());
-            // salvarLista(conn, execucaoId, tokens.getObjetivoSistema());
+     
 
             conn.commit();
             return execucaoId;

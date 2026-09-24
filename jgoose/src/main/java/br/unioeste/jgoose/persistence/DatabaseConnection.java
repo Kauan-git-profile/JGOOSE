@@ -16,17 +16,12 @@ import java.sql.Statement;
  */
 public class DatabaseConnection {
 
-    // Caminho do arquivo .db. Pode virar um caminho configurável depois.
     private static final String URL = "jdbc:sqlite:jgoose_rastreabilidade.db";
 
     public static Connection connect() throws SQLException {
         return DriverManager.getConnection(URL);
     }
 
-    /**
-     * Cria as tabelas do modelo de rastreabilidade, se ainda não existirem.
-     * Chame uma vez no início da aplicação (ex.: no main() ou ao abrir a MainView).
-     */
     public static void criarSchema() {
 
         System.out.println("[SQLite] Caminho do banco: " + new java.io.File("jgoose_rastreabilidade.db").getAbsolutePath());
@@ -52,8 +47,6 @@ public class DatabaseConnection {
             "  FOREIGN KEY (elemento_origem_id) REFERENCES elemento_rastreado(id)" +
             ");";
 
-        // Tabela auxiliar: cada "execução" (rodada de mapeamento) vira um snapshot.
-        // Facilita depois comparar snapshots e gerar o hash de auditoria por execução.
         String sqlExecucao =
             "CREATE TABLE IF NOT EXISTS execucao_mapeamento (" +
             "  id INTEGER PRIMARY KEY AUTOINCREMENT," +
