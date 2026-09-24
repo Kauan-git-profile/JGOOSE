@@ -84,6 +84,10 @@ public class HorizontalControler extends AbstractAction {
                 horizontalUseCaseTraceController.actionPerformed(e);
                 traceUCHorizontal = new TraceUCHorizontal();
                 traceUCHorizontal.TraceElementsUCHorizontal();
+                
+                DatabaseConnection.criarSchema();
+                new RastreabilidadeDAO().salvar(TraceUCHorizontal.getLista(), "UC Horizontal");
+                
                 index = 2;
                 break;
 
