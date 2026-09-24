@@ -17,6 +17,8 @@ import java.awt.event.ActionEvent;
 import javax.swing.AbstractAction;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
+import br.unioeste.jgoose.persistence.DatabaseConnection;
+import br.unioeste.jgoose.persistence.RastreabilidadeDAO;
 
 /**
  *
