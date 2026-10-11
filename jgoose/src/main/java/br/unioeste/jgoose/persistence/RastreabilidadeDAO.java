@@ -12,23 +12,15 @@ import java.util.List;
 
 public class RastreabilidadeDAO {
 
-    
-      @param tokens  
-      @param origem  
-                     
-      @return
-     
-    public long salvar(TokensTraceability tokens, String origem) {
+    public long salvar(TokensTraceability tokens, String origem, String nomeProjeto) {
         try (Connection conn = DatabaseConnection.connect()) {
             conn.setAutoCommit(false);
 
-            long execucaoId = criarExecucao(conn, origem);
+            long projetoId = obterOuCriarProjeto(conn, nomeProjeto);
+            long execucaoId = criarExecucao(conn, projetoId, origem);
 
-      
             salvarLista(conn, execucaoId, tokens.getStakeholders());
             salvarLista(conn, execucaoId, tokens.getRequisitos());
-
-     
 
             conn.commit();
             return execucaoId;
@@ -38,10 +30,27 @@ public class RastreabilidadeDAO {
         }
     }
 
-    private long criarExecucao(Connection conn, String origem) throws SQLException {
-        String sql = "INSERT INTO execucao_mapeamento(origem) VALUES (?)";
+    private long obterOuCriarProjeto(Connection conn, String nome) throws SQLException {
+        try (PreparedStatement psInsert = conn.prepareStatement(
+                "INSERT OR IGNORE INTO projeto(nome) VALUES (?)")) {
+            psInsert.setString(1, nome);
+            psInsert.executeUpdate();
+        }
+        try (PreparedStatement psSelect = conn.prepareStatement(
+                "SELECT id FROM projeto WHERE nome = ?")) {
+            psSelect.setString(1, nome);
+            try (ResultSet rs = psSelect.executeQuery()) {
+                rs.next();
+                return rs.getLong(1);
+            }
+        }
+    }
+
+    private long criarExecucao(Connection conn, long projetoId, String origem) throws SQLException {
+        String sql = "INSERT INTO execucao_mapeamento(projeto_id, origem) VALUES (?,?)";
         try (PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
-            ps.setString(1, origem);
+            ps.setLong(1, projetoId);
+            ps.setString(2, origem);
             ps.executeUpdate();
             try (ResultSet rs = ps.getGeneratedKeys()) {
                 rs.next();
@@ -79,8 +88,8 @@ public class RastreabilidadeDAO {
                 if (el.getListConcflicts() != null) {
                     for (String[] relacao : el.getListConcflicts()) {
                         psRel.setLong(1, elementoId);
-                        psRel.setString(2, relacao[0]); // código do elemento relacionado
-                        psRel.setString(3, relacao[1]); // grau: A, M ou B
+                        psRel.setString(2, relacao[0]);
+                        psRel.setString(3, relacao[1]);
                         psRel.addBatch();
                     }
                 }

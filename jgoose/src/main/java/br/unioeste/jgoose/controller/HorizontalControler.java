@@ -87,8 +87,13 @@ public class HorizontalControler extends AbstractAction {
                 traceUCHorizontal = new TraceUCHorizontal();
                 traceUCHorizontal.TraceElementsUCHorizontal();
                 
+                java.io.File arquivoAberto = E4JUseCases.getEditor().getCurrentFile();
+                String nomeProjeto = (arquivoAberto != null)
+                        ? arquivoAberto.getName().replaceFirst("\\.mxe$", "")
+                        : "Sem título";
+
                 DatabaseConnection.criarSchema();
-                new RastreabilidadeDAO().salvar(TraceUCHorizontal.getLista(), "UC Horizontal");
+                new RastreabilidadeDAO().salvar(TraceUCHorizontal.getLista(), "UC Horizontal", nomeProjeto);
                 
                 index = 2;
                 break;

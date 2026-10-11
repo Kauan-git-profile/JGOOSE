@@ -45,6 +45,7 @@ import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
+import javax.swing.JOptionPane;
 
 /**
  *
@@ -281,6 +282,12 @@ public class Matriz extends JFrame {
             public void actionPerformed(ActionEvent e) {
                 int ii = table.getSelectedRow();
                 int jj = table.getSelectedColumn();
+
+                if (ii < 0 || jj < 0) {
+                    JOptionPane.showMessageDialog(null,
+                        "Selecione uma célula da matriz antes de definir a dependência.");
+                    return;
+                }
 
                 String[] vetor = new String[2];
                 String abb = " ";
