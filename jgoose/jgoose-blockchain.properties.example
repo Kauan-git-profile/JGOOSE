@@ -1,0 +1,14 @@
+# Copie este arquivo para "jgoose-blockchain.properties" na pasta de onde você roda o jar
+# (ou aponte outro caminho com a variável de ambiente JGOOSE_BLOCKCHAIN_CONFIG).
+# O arquivo real está no .gitignore: NUNCA o commite (contém chave privada).
+# Variáveis de ambiente com os mesmos nomes têm prioridade sobre este arquivo.
+
+# Rede local do Hardhat (npx hardhat node)
+JGOOSE_RPC_URL=http://127.0.0.1:8545
+JGOOSE_CHAIN_ID=31337
+
+# Chave privada de uma conta de TESTE (ex.: "Account #0" impressa pelo hardhat node).
+JGOOSE_PRIVATE_KEY=0xCOLE_AQUI_A_CHAVE_PRIVADA_DE_TESTE
+
+# Endereço impresso no final do deploy (npm run deploy:local)
+JGOOSE_CONTRACT_ADDRESS=0xCOLE_AQUI_O_ENDERECO_DO_CONTRATO

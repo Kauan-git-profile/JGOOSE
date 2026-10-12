@@ -97,4 +97,26 @@ public class RastreabilidadeDAO {
             psRel.executeBatch();
         }
     }
+
+    /** Grava o hash SHA-256 calculado para a execução. */
+    public void salvarHash(long execucaoId, String hashSha256) throws SQLException {
+        try (Connection conn = DatabaseConnection.connect();
+             PreparedStatement ps = conn.prepareStatement(
+                     "UPDATE execucao_mapeamento SET hash_sha256 = ? WHERE id = ?")) {
+            ps.setString(1, hashSha256);
+            ps.setLong(2, execucaoId);
+            ps.executeUpdate();
+        }
+    }
+
+    /** Grava o hash da transação on-chain que registrou o hash desta execução. */
+    public void salvarTxHash(long execucaoId, String txHash) throws SQLException {
+        try (Connection conn = DatabaseConnection.connect();
+             PreparedStatement ps = conn.prepareStatement(
+                     "UPDATE execucao_mapeamento SET tx_hash = ? WHERE id = ?")) {
+            ps.setString(1, txHash);
+            ps.setLong(2, execucaoId);
+            ps.executeUpdate();
+        }
+    }
 }

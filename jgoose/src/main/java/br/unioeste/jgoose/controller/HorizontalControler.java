@@ -19,6 +19,7 @@ import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import br.unioeste.jgoose.persistence.DatabaseConnection;
 import br.unioeste.jgoose.persistence.RastreabilidadeDAO;
+import br.unioeste.jgoose.blockchain.IntegridadeService;
 
 /**
  *
@@ -93,7 +94,22 @@ public class HorizontalControler extends AbstractAction {
                         : "Sem título";
 
                 DatabaseConnection.criarSchema();
-                new RastreabilidadeDAO().salvar(TraceUCHorizontal.getLista(), "UC Horizontal", nomeProjeto);
+                final long execucaoId = new RastreabilidadeDAO()
+                        .salvar(TraceUCHorizontal.getLista(), "UC Horizontal", nomeProjeto);
+
+                // Camada de integridade (TCC): calcula o SHA-256 da execução salva e registra
+                // o hash na blockchain. Roda em segundo plano para não travar a interface;
+                // se a blockchain estiver fora do ar, só aparece uma mensagem no console.
+                if (execucaoId > 0) {
+                    Thread integridade = new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            System.out.println(IntegridadeService.registrarExecucao(execucaoId));
+                        }
+                    }, "jgoose-integridade");
+                    integridade.setDaemon(true);
+                    integridade.start();
+                }
                 
                 index = 2;
                 break;

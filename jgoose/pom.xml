@@ -150,6 +150,13 @@
             <artifactId>sqlite-jdbc</artifactId>
             <version>3.46.1.3</version>
         </dependency>
+        <!-- Camada on-chain (TCC): cliente Ethereum para registrar/consultar hashes no contrato.
+             Web3j 4.10+ exige Java 17 ou superior em tempo de execução. -->
+        <dependency>
+            <groupId>org.web3j</groupId>
+            <artifactId>core</artifactId>
+            <version>4.12.3</version>
+        </dependency>
     </dependencies>
     
 </project>

@@ -1,0 +1,982 @@
+diff --git a/.gitignore b/.gitignore
+index 6c83501..a86a2e2 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -1,3 +1,8 @@
+ /jgraphx-master/jgraphx-master/target/
+ 
+ *.cpp
++
++# Camada de integridade: segredos e dados locais (nunca versionar)
++jgoose-blockchain.properties
++*.db
++urlSepolia
+diff --git a/jgoose/jgoose-blockchain.properties.example b/jgoose/jgoose-blockchain.properties.example
+new file mode 100644
+index 0000000..79d0ad1
+--- /dev/null
++++ b/jgoose/jgoose-blockchain.properties.example
+@@ -0,0 +1,14 @@
++# Copie este arquivo para "jgoose-blockchain.properties" na pasta de onde você roda o jar
++# (ou aponte outro caminho com a variável de ambiente JGOOSE_BLOCKCHAIN_CONFIG).
++# O arquivo real está no .gitignore: NUNCA o commite (contém chave privada).
++# Variáveis de ambiente com os mesmos nomes têm prioridade sobre este arquivo.
++
++# Rede local do Hardhat (npx hardhat node)
++JGOOSE_RPC_URL=http://127.0.0.1:8545
++JGOOSE_CHAIN_ID=31337
++
++# Chave privada de uma conta de TESTE (ex.: "Account #0" impressa pelo hardhat node).
++JGOOSE_PRIVATE_KEY=0xCOLE_AQUI_A_CHAVE_PRIVADA_DE_TESTE
++
++# Endereço impresso no final do deploy (npm run deploy:local)
++JGOOSE_CONTRACT_ADDRESS=0xCOLE_AQUI_O_ENDERECO_DO_CONTRATO
+diff --git a/jgoose/pom.xml b/jgoose/pom.xml
+index a3676e3..5697130 100644
+--- a/jgoose/pom.xml
++++ b/jgoose/pom.xml
+@@ -150,6 +150,13 @@
+             <artifactId>sqlite-jdbc</artifactId>
+             <version>3.46.1.3</version>
+         </dependency>
++        <!-- Camada on-chain (TCC): cliente Ethereum para registrar/consultar hashes no contrato.
++             Web3j 4.10+ exige Java 17 ou superior em tempo de execução. -->
++        <dependency>
++            <groupId>org.web3j</groupId>
++            <artifactId>core</artifactId>
++            <version>4.12.3</version>
++        </dependency>
+     </dependencies>
+     
+ </project>
+diff --git a/jgoose/src/main/java/br/unioeste/jgoose/blockchain/AuditoriaService.java b/jgoose/src/main/java/br/unioeste/jgoose/blockchain/AuditoriaService.java
+new file mode 100644
+index 0000000..f756fc4
+--- /dev/null
++++ b/jgoose/src/main/java/br/unioeste/jgoose/blockchain/AuditoriaService.java
+@@ -0,0 +1,212 @@
++package br.unioeste.jgoose.blockchain;
++
++import br.unioeste.jgoose.persistence.DatabaseConnection;
++import br.unioeste.jgoose.persistence.HashService;
++
++import java.io.File;
++import java.sql.Connection;
++import java.sql.PreparedStatement;
++import java.sql.ResultSet;
++import java.sql.SQLException;
++import java.time.Instant;
++import java.util.ArrayList;
++import java.util.List;
++
++/**
++ * Módulo de auditoria: recalcula o hash dos dados que estão HOJE no banco e compara
++ * com os hashes gravados na blockchain para a mesma execução (mesmo execucaoId).
++ *
++ * Uso por linha de comando (na pasta onde está o .db, ou com JGOOSE_DB_PATH):
++ *   java -cp jgoose-0.3.0-jar-with-dependencies.jar br.unioeste.jgoose.blockchain.AuditoriaService
++ *   java -cp ... br.unioeste.jgoose.blockchain.AuditoriaService --id 3
++ * Código de saída: 0 = tudo íntegro; 2 = divergência/versão antiga/não registrado; 3 = erro.
++ */
++public class AuditoriaService {
++
++    public enum Status {
++        /** O hash recalculado é igual à versão mais recente registrada on-chain. */
++        INTEGRO,
++        /** Igual a uma versão antiga: existe um registro mais novo diferente dos dados atuais. */
++        VERSAO_ANTERIOR,
++        /** Não é igual a nenhuma versão registrada: indício de adulteração do banco. */
++        DIVERGENTE,
++        /** A execução nunca foi registrada on-chain. */
++        NAO_REGISTRADO_ONCHAIN
++    }
++
++    public static class Resultado {
++        public final long execucaoId;
++        public final Status status;
++        public final String hashRecalculado;
++        public final String hashSalvoNoBanco;
++        public final List<BlockchainService.RegistroOnChain> versoes;
++        /** Versão (1..n) igual ao hash recalculado, ou 0 se nenhuma. */
++        public final int versaoCorrespondente;
++
++        Resultado(long execucaoId, Status status, String hashRecalculado, String hashSalvoNoBanco,
++                  List<BlockchainService.RegistroOnChain> versoes, int versaoCorrespondente) {
++            this.execucaoId = execucaoId;
++            this.status = status;
++            this.hashRecalculado = hashRecalculado;
++            this.hashSalvoNoBanco = hashSalvoNoBanco;
++            this.versoes = versoes;
++            this.versaoCorrespondente = versaoCorrespondente;
++        }
++
++        /** True se o hash guardado na coluna do banco difere do recalculado (os dados mudaram depois do registro). */
++        public boolean colunaHashDesatualizada() {
++            return hashSalvoNoBanco != null && !hashSalvoNoBanco.equalsIgnoreCase(hashRecalculado);
++        }
++
++        /** True se a execução tem mais de uma versão registrada on-chain. */
++        public boolean registrosSuspeitos() {
++            return versoes.size() > 1;
++        }
++
++        /** True se alguma versão foi gravada por uma conta diferente da que gravou a primeira. */
++        public boolean registrantesDiferentes() {
++            for (BlockchainService.RegistroOnChain r : versoes) {
++                if (!r.responsavel.equalsIgnoreCase(versoes.get(0).responsavel)) {
++                    return true;
++                }
++            }
++            return false;
++        }
++
++        public String descricao() {
++            StringBuilder sb = new StringBuilder();
++            sb.append("Execução ").append(execucaoId).append(": ");
++            switch (status) {
++                case INTEGRO:
++                    sb.append("ÍNTEGRO - o hash recalculado do banco é igual ao registrado na blockchain");
++                    break;
++                case VERSAO_ANTERIOR:
++                    sb.append("DESATUALIZADO - os dados do banco correspondem à versão ").append(versaoCorrespondente)
++                      .append(" de ").append(versoes.size()).append(", mas há um registro mais recente na blockchain");
++                    break;
++                case DIVERGENTE:
++                    sb.append("ALERTA DE ADULTERAÇÃO - o hash recalculado do banco NÃO corresponde a nenhum registro da blockchain");
++                    break;
++                default:
++                    sb.append("NÃO REGISTRADO na blockchain (nada para comparar)");
++                    break;
++            }
++            sb.append("\n    recalculado (banco agora): ").append(hashRecalculado);
++            for (BlockchainService.RegistroOnChain r : versoes) {
++                sb.append("\n    on-chain v").append(r.versao).append("             : ").append(r.hash)
++                  .append("  (").append(Instant.ofEpochSecond(r.timestamp.longValue()))
++                  .append(", por ").append(r.responsavel).append(")");
++            }
++            if (colunaHashDesatualizada()) {
++                sb.append("\n    ATENÇÃO: o hash salvo na coluna hash_sha256 (").append(hashSalvoNoBanco)
++                  .append(") difere do recalculado - os dados mudaram depois do registro.");
++            }
++            if (registrosSuspeitos()) {
++                sb.append("\n    AVISO: esta execução tem ").append(versoes.size())
++                  .append(" versões registradas on-chain; confirme que todas foram legítimas.");
++            }
++            if (registrantesDiferentes()) {
++                sb.append("\n    AVISO: há registros feitos por contas diferentes (o contrato não restringe quem pode gravar).");
++            }
++            return sb.toString();
++        }
++    }
++
++    private final HashService hashService = new HashService();
++
++    public Resultado auditar(BlockchainService chain, long execucaoId) throws SQLException {
++        String recalculado = hashService.calcularHashExecucao(execucaoId);
++        String salvo = lerHashSalvo(execucaoId);
++
++        List<BlockchainService.RegistroOnChain> versoes = chain.obterTodos(execucaoId);
++        if (versoes.isEmpty()) {
++            return new Resultado(execucaoId, Status.NAO_REGISTRADO_ONCHAIN, recalculado, salvo, versoes, 0);
++        }
++
++        int ultima = versoes.size();
++        if (versoes.get(ultima - 1).hash.equalsIgnoreCase(recalculado)) {
++            return new Resultado(execucaoId, Status.INTEGRO, recalculado, salvo, versoes, ultima);
++        }
++        for (int i = ultima - 2; i >= 0; i--) {
++            if (versoes.get(i).hash.equalsIgnoreCase(recalculado)) {
++                return new Resultado(execucaoId, Status.VERSAO_ANTERIOR, recalculado, salvo, versoes, i + 1);
++            }
++        }
++        return new Resultado(execucaoId, Status.DIVERGENTE, recalculado, salvo, versoes, 0);
++    }
++
++    public List<Long> listarExecucoes() throws SQLException {
++        List<Long> ids = new ArrayList<Long>();
++        try (Connection conn = DatabaseConnection.connect();
++             PreparedStatement ps = conn.prepareStatement("SELECT id FROM execucao_mapeamento ORDER BY id");
++             ResultSet rs = ps.executeQuery()) {
++            while (rs.next()) {
++                ids.add(rs.getLong(1));
++            }
++        }
++        return ids;
++    }
++
++    private String lerHashSalvo(long execucaoId) throws SQLException {
++        try (Connection conn = DatabaseConnection.connect();
++             PreparedStatement ps = conn.prepareStatement("SELECT hash_sha256 FROM execucao_mapeamento WHERE id = ?")) {
++            ps.setLong(1, execucaoId);
++            try (ResultSet rs = ps.executeQuery()) {
++                return rs.next() ? rs.getString(1) : null;
++            }
++        }
++    }
++
++    public static void main(String[] args) {
++        Long somenteId = null;
++        if (args.length == 2 && "--id".equals(args[0])) {
++            somenteId = Long.valueOf(args[1]);
++        } else if (args.length != 0) {
++            System.err.println("Uso: AuditoriaService [--id <execucaoId>]");
++            System.exit(3);
++        }
++
++        File db = new File(DatabaseConnection.caminhoDoBanco());
++        System.out.println("[Auditoria] Banco: " + db.getAbsolutePath());
++        if (!db.isFile()) {
++            System.err.println("Arquivo de banco não encontrado. Rode na pasta onde o .db foi criado ou defina JGOOSE_DB_PATH.");
++            System.exit(3);
++        }
++        if (!BlockchainService.configurado()) {
++            System.err.println("Blockchain não configurada (JGOOSE_PRIVATE_KEY e JGOOSE_CONTRACT_ADDRESS).");
++            System.exit(3);
++        }
++
++        BlockchainService chain = null;
++        int codigo = 0;
++        try {
++            DatabaseConnection.criarSchema(); // idempotente; também migra bancos antigos (coluna tx_hash)
++            chain = new BlockchainService();
++            AuditoriaService svc = new AuditoriaService();
++            List<Long> ids = new ArrayList<Long>();
++            if (somenteId != null) {
++                ids.add(somenteId);
++            } else {
++                ids = svc.listarExecucoes();
++            }
++            if (ids.isEmpty()) {
++                System.out.println("Nenhuma execução no banco.");
++            }
++            for (Long id : ids) {
++                Resultado r = svc.auditar(chain, id.longValue());
++                System.out.println(r.descricao());
++                if (r.status != Status.INTEGRO) {
++                    codigo = 2;
++                }
++            }
++        } catch (Exception e) {
++            System.err.println("Erro na auditoria: " + e.getMessage());
++            codigo = 3;
++        } finally {
++            if (chain != null) {
++                chain.encerrar();
++            }
++        }
++        System.exit(codigo);
++    }
++}
+diff --git a/jgoose/src/main/java/br/unioeste/jgoose/blockchain/BlockchainService.java b/jgoose/src/main/java/br/unioeste/jgoose/blockchain/BlockchainService.java
+new file mode 100644
+index 0000000..1589ff4
+--- /dev/null
++++ b/jgoose/src/main/java/br/unioeste/jgoose/blockchain/BlockchainService.java
+@@ -0,0 +1,303 @@
++package br.unioeste.jgoose.blockchain;
++
++import java.io.File;
++import java.io.FileInputStream;
++import java.io.IOException;
++import java.io.InputStreamReader;
++import java.io.Reader;
++import java.math.BigInteger;
++import java.nio.charset.StandardCharsets;
++import java.util.ArrayList;
++import java.util.Arrays;
++import java.util.Collections;
++import java.util.List;
++import java.util.Properties;
++import java.util.regex.Pattern;
++
++import org.web3j.abi.FunctionEncoder;
++import org.web3j.abi.FunctionReturnDecoder;
++import org.web3j.abi.TypeReference;
++import org.web3j.abi.datatypes.Address;
++import org.web3j.abi.datatypes.Function;
++import org.web3j.abi.datatypes.Type;
++import org.web3j.abi.datatypes.generated.Bytes32;
++import org.web3j.abi.datatypes.generated.Uint256;
++import org.web3j.crypto.Credentials;
++import org.web3j.protocol.Web3j;
++import org.web3j.protocol.core.DefaultBlockParameterName;
++import org.web3j.protocol.core.methods.request.Transaction;
++import org.web3j.protocol.core.methods.response.EthCall;
++import org.web3j.protocol.core.methods.response.EthChainId;
++import org.web3j.protocol.core.methods.response.EthEstimateGas;
++import org.web3j.protocol.core.methods.response.EthGetCode;
++import org.web3j.protocol.core.methods.response.EthSendTransaction;
++import org.web3j.protocol.core.methods.response.TransactionReceipt;
++import org.web3j.protocol.http.HttpService;
++import org.web3j.tx.RawTransactionManager;
++import org.web3j.tx.response.PollingTransactionReceiptProcessor;
++import org.web3j.utils.Numeric;
++
++/**
++ * Camada on-chain do TCC: grava e consulta o hash SHA-256 de cada execução no contrato
++ * RastreabilidadeRegistry (blockchain/contracts/RastreabilidadeRegistry.sol).
++ *
++ * Funções do contrato usadas:
++ *   registrarHash(uint256 execucaoId, bytes32 hashArtefato)
++ *   quantidadeRegistros(uint256 execucaoId) -> uint256
++ *   obterRegistro(uint256 execucaoId, uint256 indice) -> (bytes32, uint256, address)
++ *
++ * Configuração: variáveis de ambiente OU arquivo jgoose-blockchain.properties
++ * (no diretório de execução, ou o caminho em JGOOSE_BLOCKCHAIN_CONFIG).
++ * A variável de ambiente tem prioridade. Chaves:
++ *   JGOOSE_RPC_URL           (padrão: http://127.0.0.1:8545)
++ *   JGOOSE_CHAIN_ID          (padrão: 31337, a rede local do Hardhat)
++ *   JGOOSE_PRIVATE_KEY       (obrigatória; chave de uma conta de TESTE)
++ *   JGOOSE_CONTRACT_ADDRESS  (obrigatória; endereço impresso no deploy)
++ */
++public class BlockchainService {
++
++    /** Uma versão do hash registrada on-chain para uma execução. */
++    public static class RegistroOnChain {
++        /** Número da versão (1 = primeiro registro). */
++        public final int versao;
++        /** SHA-256 em hexadecimal minúsculo (64 caracteres). */
++        public final String hash;
++        public final BigInteger timestamp;
++        /** Endereço da conta que gravou. */
++        public final String responsavel;
++
++        RegistroOnChain(int versao, String hash, BigInteger timestamp, String responsavel) {
++            this.versao = versao;
++            this.hash = hash;
++            this.timestamp = timestamp;
++            this.responsavel = responsavel;
++        }
++    }
++
++    private static final String ARQUIVO_CONFIG_PADRAO = "jgoose-blockchain.properties";
++    private static final Pattern ENDERECO = Pattern.compile("^0x[0-9a-fA-F]{40}$");
++    private static final Pattern CHAVE_PRIVADA = Pattern.compile("^(0x)?[0-9a-fA-F]{64}$");
++    private static final Pattern HASH_SHA256 = Pattern.compile("^[0-9a-fA-F]{64}$");
++    /** SHA-256 da string vazia; usado só no teste rápido (main). */
++    private static final String SHA256_DE_TESTE = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
++
++    private final Web3j web3j;
++    private final Credentials credentials;
++    private final String contractAddress;
++    private final long chainId;
++
++    /** True se a chave privada e o endereço do contrato estão configurados. */
++    public static boolean configurado() {
++        Properties arq = carregarArquivo();
++        return valor("JGOOSE_PRIVATE_KEY", null, arq) != null
++                && valor("JGOOSE_CONTRACT_ADDRESS", null, arq) != null;
++    }
++
++    public BlockchainService() {
++        Properties arq = carregarArquivo();
++        String rpcUrl = valor("JGOOSE_RPC_URL", "http://127.0.0.1:8545", arq);
++        String chain = valor("JGOOSE_CHAIN_ID", "31337", arq);
++        String chave = exigir("JGOOSE_PRIVATE_KEY", arq);
++        String endereco = exigir("JGOOSE_CONTRACT_ADDRESS", arq);
++
++        if (!CHAVE_PRIVADA.matcher(chave).matches()) {
++            throw new IllegalStateException("JGOOSE_PRIVATE_KEY inválida (esperado 64 caracteres hexadecimais).");
++        }
++        if (!ENDERECO.matcher(endereco).matches()) {
++            throw new IllegalStateException("JGOOSE_CONTRACT_ADDRESS inválido (esperado 0x + 40 hexadecimais).");
++        }
++        try {
++            this.chainId = Long.parseLong(chain);
++        } catch (NumberFormatException e) {
++            throw new IllegalStateException("JGOOSE_CHAIN_ID inválido: " + chain);
++        }
++        this.credentials = Credentials.create(chave);
++        this.contractAddress = endereco;
++        this.web3j = Web3j.build(new HttpService(rpcUrl));
++    }
++
++    /**
++     * Registra uma NOVA versão do hash para a execução e espera a confirmação.
++     * @param hashSha256Hex SHA-256 em hexadecimal (64 caracteres), o mesmo guardado em hash_sha256
++     * @return o hash da transação (txHash)
++     */
++    public String registrarHash(long execucaoId, String hashSha256Hex) {
++        try {
++            verificarRede();
++
++            Function fn = new Function(
++                    "registrarHash",
++                    Arrays.<Type>asList(new Uint256(BigInteger.valueOf(execucaoId)), paraBytes32(hashSha256Hex)),
++                    Collections.<TypeReference<?>>emptyList());
++            String data = FunctionEncoder.encode(fn);
++            String from = credentials.getAddress();
++
++            // A estimativa de gas também revela, antes de enviar, se o contrato vai recusar o registro.
++            EthEstimateGas est = web3j.ethEstimateGas(
++                    Transaction.createEthCallTransaction(from, contractAddress, data)).send();
++            if (est.hasError()) {
++                throw new IllegalStateException("O contrato recusou o registro: " + est.getError().getMessage());
++            }
++            BigInteger gasLimit = est.getAmountUsed().multiply(BigInteger.valueOf(12)).divide(BigInteger.TEN); // +20%
++            BigInteger gasPrice = web3j.ethGasPrice().send().getGasPrice();
++
++            RawTransactionManager tm = new RawTransactionManager(web3j, credentials, chainId);
++            EthSendTransaction resp = tm.sendTransaction(gasPrice, gasLimit, contractAddress, data, BigInteger.ZERO);
++            if (resp.hasError()) {
++                throw new IllegalStateException("Erro ao enviar a transação: " + resp.getError().getMessage());
++            }
++
++            String txHash = resp.getTransactionHash();
++            TransactionReceipt receipt =
++                    new PollingTransactionReceiptProcessor(web3j, 1000, 30).waitForTransactionReceipt(txHash);
++            if (!receipt.isStatusOK()) {
++                throw new IllegalStateException("Transação revertida pela rede: " + txHash);
++            }
++            return txHash;
++        } catch (RuntimeException e) {
++            throw e;
++        } catch (Exception e) {
++            throw new IllegalStateException("Falha ao registrar hash on-chain: " + e.getMessage(), e);
++        }
++    }
++
++    /** Quantas versões de hash existem on-chain para a execução (0 = nunca registrada). */
++    public long quantidadeRegistros(long execucaoId) {
++        Function fn = new Function(
++                "quantidadeRegistros",
++                Arrays.<Type>asList(new Uint256(BigInteger.valueOf(execucaoId))),
++                Arrays.<TypeReference<?>>asList(new TypeReference<Uint256>() {}));
++        List<Type> out = chamar(fn);
++        return ((BigInteger) out.get(0).getValue()).longValue();
++    }
++
++    /** Lê uma versão específica (indice começa em 0; versão = indice + 1). */
++    public RegistroOnChain obterRegistro(long execucaoId, long indice) {
++        Function fn = new Function(
++                "obterRegistro",
++                Arrays.<Type>asList(new Uint256(BigInteger.valueOf(execucaoId)),
++                                    new Uint256(BigInteger.valueOf(indice))),
++                Arrays.<TypeReference<?>>asList(
++                        new TypeReference<Bytes32>() {},
++                        new TypeReference<Uint256>() {},
++                        new TypeReference<Address>() {}));
++        List<Type> out = chamar(fn);
++        return new RegistroOnChain(
++                (int) indice + 1,
++                Numeric.toHexStringNoPrefix((byte[]) out.get(0).getValue()),
++                (BigInteger) out.get(1).getValue(),
++                (String) out.get(2).getValue());
++    }
++
++    /** Todas as versões registradas para a execução, da mais antiga para a mais recente. */
++    public List<RegistroOnChain> obterTodos(long execucaoId) {
++        long n = quantidadeRegistros(execucaoId);
++        List<RegistroOnChain> lista = new ArrayList<RegistroOnChain>();
++        for (long i = 0; i < n; i++) {
++            lista.add(obterRegistro(execucaoId, i));
++        }
++        return lista;
++    }
++
++    public void encerrar() {
++        web3j.shutdown();
++    }
++
++    // ---------------------------------------------------------------- internos
++
++    private List<Type> chamar(Function fn) {
++        try {
++            EthCall call = web3j.ethCall(
++                    Transaction.createEthCallTransaction(
++                            credentials.getAddress(), contractAddress, FunctionEncoder.encode(fn)),
++                    DefaultBlockParameterName.LATEST).send();
++            if (call.hasError()) {
++                throw new IllegalStateException("Erro na consulta on-chain: " + call.getError().getMessage());
++            }
++            String retorno = call.getValue();
++            if (retorno == null || "0x".equals(retorno)) {
++                throw new IllegalStateException("Nenhum contrato encontrado em " + contractAddress
++                        + ". Se o nó local foi reiniciado, refaça o deploy e confira JGOOSE_CONTRACT_ADDRESS.");
++            }
++            return FunctionReturnDecoder.decode(retorno, fn.getOutputParameters());
++        } catch (IOException e) {
++            throw new IllegalStateException("Falha de comunicação com a rede (o nó está rodando?): " + e.getMessage(), e);
++        }
++    }
++
++    private static Bytes32 paraBytes32(String hexSha256) {
++        if (hexSha256 == null || !HASH_SHA256.matcher(hexSha256).matches()) {
++            throw new IllegalArgumentException("Hash SHA-256 inválido (esperado 64 caracteres hexadecimais): " + hexSha256);
++        }
++        return new Bytes32(Numeric.hexStringToByteArray(hexSha256));
++    }
++
++    /**
++     * Confere a rede (Chain ID) e se existe mesmo um contrato no endereço configurado.
++     * Sem a segunda checagem, um endereço errado (ex.: nó local reiniciado, contrato perdido)
++     * faria o envio "dar certo" sem registrar nada.
++     */
++    private void verificarRede() throws IOException {
++        EthChainId r = web3j.ethChainId().send();
++        if (r.hasError()) {
++            throw new IllegalStateException("Não foi possível consultar a rede: " + r.getError().getMessage());
++        }
++        long real = r.getChainId().longValue();
++        if (real != chainId) {
++            throw new IllegalStateException("Chain ID da rede é " + real
++                    + ", mas JGOOSE_CHAIN_ID está como " + chainId + ".");
++        }
++        EthGetCode code = web3j.ethGetCode(contractAddress, DefaultBlockParameterName.LATEST).send();
++        if (code.hasError() || code.getCode() == null || "0x".equals(code.getCode())) {
++            throw new IllegalStateException("Nenhum contrato encontrado em " + contractAddress
++                    + ". Se o nó local foi reiniciado, refaça o deploy e confira JGOOSE_CONTRACT_ADDRESS.");
++        }
++    }
++
++    private static Properties carregarArquivo() {
++        Properties p = new Properties();
++        String caminho = System.getenv("JGOOSE_BLOCKCHAIN_CONFIG");
++        File f = new File((caminho == null || caminho.trim().isEmpty()) ? ARQUIVO_CONFIG_PADRAO : caminho.trim());
++        if (f.isFile()) {
++            try (Reader r = new InputStreamReader(new FileInputStream(f), StandardCharsets.UTF_8)) {
++                p.load(r);
++            } catch (IOException e) {
++                System.err.println("[Blockchain] Não foi possível ler " + f.getAbsolutePath() + ": " + e.getMessage());
++            }
++        }
++        return p;
++    }
++
++    /** Variável de ambiente > arquivo de propriedades > padrão. Vazio conta como ausente. */
++    private static String valor(String nome, String padrao, Properties arq) {
++        String v = System.getenv(nome);
++        if (v == null || v.trim().isEmpty()) {
++            v = arq.getProperty(nome);
++        }
++        if (v == null || v.trim().isEmpty()) {
++            return padrao;
++        }
++        return v.trim();
++    }
++
++    private static String exigir(String nome, Properties arq) {
++        String v = valor(nome, null, arq);
++        if (v == null) {
++            throw new IllegalStateException("Configuração obrigatória não definida: " + nome);
++        }
++        return v;
++    }
++
++    /** Teste rápido sem a interface: registra um hash fictício num id alto e lê de volta. */
++    public static void main(String[] args) {
++        BlockchainService s = new BlockchainService();
++        long id = 900000000L + (System.currentTimeMillis() % 1000000L);
++        String hash = SHA256_DE_TESTE;
++        String tx = s.registrarHash(id, hash);
++        System.out.println("txHash: " + tx);
++        for (RegistroOnChain r : s.obterTodos(id)) {
++            System.out.println("versão " + r.versao + ": " + r.hash + " @ " + r.timestamp + " por " + r.responsavel);
++        }
++        s.encerrar();
++    }
++}
+diff --git a/jgoose/src/main/java/br/unioeste/jgoose/blockchain/IntegridadeService.java b/jgoose/src/main/java/br/unioeste/jgoose/blockchain/IntegridadeService.java
+new file mode 100644
+index 0000000..68b7dd8
+--- /dev/null
++++ b/jgoose/src/main/java/br/unioeste/jgoose/blockchain/IntegridadeService.java
+@@ -0,0 +1,51 @@
++package br.unioeste.jgoose.blockchain;
++
++import br.unioeste.jgoose.persistence.HashService;
++import br.unioeste.jgoose.persistence.RastreabilidadeDAO;
++
++/**
++ * Fluxo "salvou no banco -> calcula hash -> registra on-chain".
++ * Nunca lança exceção para quem chama: falhas viram uma mensagem, para que um problema
++ * na blockchain não derrube a geração da matriz (baixo impacto sobre a ferramenta CASE).
++ */
++public class IntegridadeService {
++
++    /**
++     * Calcula o hash SHA-256 da execução, salva em execucao_mapeamento.hash_sha256 e, se a
++     * blockchain estiver configurada, registra o hash no contrato (salvando o txHash).
++     * O identificador que liga banco e blockchain é o próprio id da execução.
++     * @return mensagem de status para o console
++     */
++    public static String registrarExecucao(long execucaoId) {
++        String hash;
++        RastreabilidadeDAO dao = new RastreabilidadeDAO();
++        try {
++            hash = new HashService().calcularHashExecucao(execucaoId);
++            dao.salvarHash(execucaoId, hash);
++        } catch (Exception e) {
++            e.printStackTrace();
++            return "[Integridade] Falha ao calcular/salvar o hash da execução " + execucaoId + ": " + e.getMessage();
++        }
++
++        if (!BlockchainService.configurado()) {
++            return "[Integridade] Execução " + execucaoId + ": hash " + hash
++                    + " salvo no banco. Blockchain NÃO configurada (defina JGOOSE_PRIVATE_KEY e JGOOSE_CONTRACT_ADDRESS)"
++                    + " - hash não foi enviado on-chain.";
++        }
++
++        BlockchainService chain = null;
++        try {
++            chain = new BlockchainService();
++            String tx = chain.registrarHash(execucaoId, hash);
++            dao.salvarTxHash(execucaoId, tx);
++            return "[Integridade] Execução " + execucaoId + ": hash " + hash + " registrado on-chain. txHash: " + tx;
++        } catch (Exception e) {
++            return "[Integridade] Execução " + execucaoId + ": hash " + hash
++                    + " salvo no banco, mas o envio on-chain FALHOU: " + e.getMessage();
++        } finally {
++            if (chain != null) {
++                chain.encerrar();
++            }
++        }
++    }
++}
+diff --git a/jgoose/src/main/java/br/unioeste/jgoose/controller/HorizontalControler.java b/jgoose/src/main/java/br/unioeste/jgoose/controller/HorizontalControler.java
+index 7482497..ef6a4a9 100644
+--- a/jgoose/src/main/java/br/unioeste/jgoose/controller/HorizontalControler.java
++++ b/jgoose/src/main/java/br/unioeste/jgoose/controller/HorizontalControler.java
+@@ -19,6 +19,7 @@ import javax.swing.JFrame;
+ import javax.swing.JOptionPane;
+ import br.unioeste.jgoose.persistence.DatabaseConnection;
+ import br.unioeste.jgoose.persistence.RastreabilidadeDAO;
++import br.unioeste.jgoose.blockchain.IntegridadeService;
+ 
+ /**
+  *
+@@ -93,7 +94,22 @@ public class HorizontalControler extends AbstractAction {
+                         : "Sem título";
+ 
+                 DatabaseConnection.criarSchema();
+-                new RastreabilidadeDAO().salvar(TraceUCHorizontal.getLista(), "UC Horizontal", nomeProjeto);
++                final long execucaoId = new RastreabilidadeDAO()
++                        .salvar(TraceUCHorizontal.getLista(), "UC Horizontal", nomeProjeto);
++
++                // Camada de integridade (TCC): calcula o SHA-256 da execução salva e registra
++                // o hash na blockchain. Roda em segundo plano para não travar a interface;
++                // se a blockchain estiver fora do ar, só aparece uma mensagem no console.
++                if (execucaoId > 0) {
++                    Thread integridade = new Thread(new Runnable() {
++                        @Override
++                        public void run() {
++                            System.out.println(IntegridadeService.registrarExecucao(execucaoId));
++                        }
++                    }, "jgoose-integridade");
++                    integridade.setDaemon(true);
++                    integridade.start();
++                }
+                 
+                 index = 2;
+                 break;
+diff --git a/jgoose/src/main/java/br/unioeste/jgoose/persistence/DatabaseConnection.java b/jgoose/src/main/java/br/unioeste/jgoose/persistence/DatabaseConnection.java
+index 95ab266..6c07063 100644
+--- a/jgoose/src/main/java/br/unioeste/jgoose/persistence/DatabaseConnection.java
++++ b/jgoose/src/main/java/br/unioeste/jgoose/persistence/DatabaseConnection.java
+@@ -1,7 +1,9 @@
+ package br.unioeste.jgoose.persistence;
+ 
++import java.io.File;
+ import java.sql.Connection;
+ import java.sql.DriverManager;
++import java.sql.ResultSet;
+ import java.sql.SQLException;
+ import java.sql.Statement;
+ 
+@@ -11,66 +13,96 @@ import java.sql.Statement;
+  *
+  * Este banco atua como o repositório off-chain descrito no TCC:
+  * armazena as estruturas de rastreabilidade brutas extraídas da JGOOSE,
+- * servindo de base para o cálculo posterior do hash (SHA-256) que será
+- * enviado à camada on-chain.
++ * servindo de base para o cálculo do hash (SHA-256) que é enviado à camada on-chain.
+  */
+ public class DatabaseConnection {
+ 
+-    private static final String URL = "jdbc:sqlite:jgoose_rastreabilidade.db";
++    private static final String ARQUIVO_PADRAO = "jgoose_rastreabilidade.db";
++
++    /**
++     * Caminho do arquivo .db. Usa a variável de ambiente JGOOSE_DB_PATH, se existir;
++     * caso contrário, o arquivo padrão no diretório de trabalho (de onde o jar foi executado).
++     */
++    public static String caminhoDoBanco() {
++        String v = System.getenv("JGOOSE_DB_PATH");
++        return (v == null || v.trim().isEmpty()) ? ARQUIVO_PADRAO : v.trim();
++    }
+ 
+     public static Connection connect() throws SQLException {
+-        return DriverManager.getConnection(URL);
++        return DriverManager.getConnection("jdbc:sqlite:" + caminhoDoBanco());
+     }
+ 
+     public static void criarSchema() {
+ 
+-    System.out.println("[SQLite] Caminho do banco: " + new java.io.File("jgoose_rastreabilidade.db").getAbsolutePath());
++        System.out.println("[SQLite] Caminho do banco: " + new File(caminhoDoBanco()).getAbsolutePath());
++
++        String sqlProjeto =
++            "CREATE TABLE IF NOT EXISTS projeto (" +
++            "  id INTEGER PRIMARY KEY AUTOINCREMENT," +
++            "  nome TEXT NOT NULL UNIQUE" +
++            ");";
+ 
+-    String sqlProjeto =
+-        "CREATE TABLE IF NOT EXISTS projeto (" +
+-        "  id INTEGER PRIMARY KEY AUTOINCREMENT," +
+-        "  nome TEXT NOT NULL UNIQUE" +
+-        ");";
++        String sqlExecucao =
++            "CREATE TABLE IF NOT EXISTS execucao_mapeamento (" +
++            "  id INTEGER PRIMARY KEY AUTOINCREMENT," +
++            "  projeto_id INTEGER NOT NULL," +
++            "  data_hora TEXT NOT NULL DEFAULT (datetime('now'))," +
++            "  origem TEXT," +
++            "  hash_sha256 TEXT," +          // SHA-256 dos dados desta execução (calculado após salvar)
++            "  tx_hash TEXT," +              // hash da transação on-chain que registrou o hash acima
++            "  FOREIGN KEY (projeto_id) REFERENCES projeto(id)" +
++            ");";
+ 
+-    String sqlExecucao =
+-        "CREATE TABLE IF NOT EXISTS execucao_mapeamento (" +
+-        "  id INTEGER PRIMARY KEY AUTOINCREMENT," +
+-        "  projeto_id INTEGER NOT NULL," +
+-        "  data_hora TEXT NOT NULL DEFAULT (datetime('now'))," +
+-        "  origem TEXT," +
+-        "  hash_sha256 TEXT," +
+-        "  FOREIGN KEY (projeto_id) REFERENCES projeto(id)" +
+-        ");";
++        String sqlElemento =
++            "CREATE TABLE IF NOT EXISTS elemento_rastreado (" +
++            "  id INTEGER PRIMARY KEY AUTOINCREMENT," +
++            "  execucao_id INTEGER NOT NULL," +
++            "  code TEXT," +
++            "  label TEXT," +
++            "  classe TEXT NOT NULL," +
++            "  fase TEXT," +
++            "  abreviacao TEXT," +
++            "  modelo TEXT" +
++            ");";
+ 
+-    String sqlElemento =
+-        "CREATE TABLE IF NOT EXISTS elemento_rastreado (" +
+-        "  id INTEGER PRIMARY KEY AUTOINCREMENT," +
+-        "  execucao_id INTEGER NOT NULL," +
+-        "  code TEXT," +
+-        "  label TEXT," +
+-        "  classe TEXT NOT NULL," +
+-        "  fase TEXT," +
+-        "  abreviacao TEXT," +
+-        "  modelo TEXT" +
+-        ");";
++        String sqlRelacionamento =
++            "CREATE TABLE IF NOT EXISTS relacionamento_rastreabilidade (" +
++            "  id INTEGER PRIMARY KEY AUTOINCREMENT," +
++            "  elemento_origem_id INTEGER NOT NULL," +
++            "  codigo_destino TEXT NOT NULL," +
++            "  grau TEXT NOT NULL," +
++            "  FOREIGN KEY (elemento_origem_id) REFERENCES elemento_rastreado(id)" +
++            ");";
+ 
+-    String sqlRelacionamento =
+-        "CREATE TABLE IF NOT EXISTS relacionamento_rastreabilidade (" +
+-        "  id INTEGER PRIMARY KEY AUTOINCREMENT," +
+-        "  elemento_origem_id INTEGER NOT NULL," +
+-        "  codigo_destino TEXT NOT NULL," +
+-        "  grau TEXT NOT NULL," +
+-        "  FOREIGN KEY (elemento_origem_id) REFERENCES elemento_rastreado(id)" +
+-        ");";
++        try (Connection conn = connect();
++             Statement stmt = conn.createStatement()) {
++            stmt.execute(sqlProjeto);      // precisa vir antes de sqlExecucao (a FK depende dela)
++            stmt.execute(sqlExecucao);
++            stmt.execute(sqlElemento);
++            stmt.execute(sqlRelacionamento);
+ 
+-    try (Connection conn = connect();
+-         Statement stmt = conn.createStatement()) {
+-        stmt.execute(sqlProjeto);      // precisa vir antes de sqlExecucao (a FK depende dela)
+-        stmt.execute(sqlExecucao);
+-        stmt.execute(sqlElemento);
+-        stmt.execute(sqlRelacionamento);
+-    } catch (SQLException e) {
+-        e.printStackTrace();
++            // Migração: bancos criados antes desta versão não têm a coluna tx_hash.
++            garantirColuna(conn, "execucao_mapeamento", "tx_hash", "TEXT");
++        } catch (SQLException e) {
++            e.printStackTrace();
++        }
++    }
++
++    private static void garantirColuna(Connection conn, String tabela, String coluna, String tipo) throws SQLException {
++        boolean existe = false;
++        try (Statement st = conn.createStatement();
++             ResultSet rs = st.executeQuery("PRAGMA table_info(" + tabela + ")")) {
++            while (rs.next()) {
++                if (coluna.equalsIgnoreCase(rs.getString("name"))) {
++                    existe = true;
++                    break;
++                }
++            }
++        }
++        if (!existe) {
++            try (Statement st = conn.createStatement()) {
++                st.execute("ALTER TABLE " + tabela + " ADD COLUMN " + coluna + " " + tipo);
++            }
++        }
+     }
+-}
+ }
+diff --git a/jgoose/src/main/java/br/unioeste/jgoose/persistence/HashService.java b/jgoose/src/main/java/br/unioeste/jgoose/persistence/HashService.java
+new file mode 100644
+index 0000000..a08e05b
+--- /dev/null
++++ b/jgoose/src/main/java/br/unioeste/jgoose/persistence/HashService.java
+@@ -0,0 +1,107 @@
++package br.unioeste.jgoose.persistence;
++
++import java.nio.charset.StandardCharsets;
++import java.security.MessageDigest;
++import java.security.NoSuchAlgorithmException;
++import java.sql.Connection;
++import java.sql.PreparedStatement;
++import java.sql.ResultSet;
++import java.sql.SQLException;
++import java.util.ArrayList;
++import java.util.Collections;
++import java.util.List;
++
++/**
++ * Calcula o hash SHA-256 do estado de UMA execução salva no banco.
++ *
++ * O hash é calculado sobre uma representação canônica (texto) dos dados:
++ * as linhas são ordenadas e os campos escapados, então o resultado depende
++ * apenas do CONTEÚDO (não da ordem de inserção nem dos ids internos).
++ * Qualquer alteração em um elemento, em uma relação ou no cabeçalho da execução
++ * muda o hash. O mesmo cálculo é usado na gravação e na auditoria.
++ */
++public class HashService {
++
++    /** Versão do formato canônico. Se o formato mudar, mude também esta versão. */
++    public static final String VERSAO_FORMATO = "JGOOSE-TRACE-V1";
++
++    public String calcularHashExecucao(long execucaoId) throws SQLException {
++        try (Connection conn = DatabaseConnection.connect()) {
++            return calcularHashExecucao(conn, execucaoId);
++        }
++    }
++
++    public String calcularHashExecucao(Connection conn, long execucaoId) throws SQLException {
++        String cabecalho;
++        try (PreparedStatement ps = conn.prepareStatement(
++                "SELECT p.nome, e.origem, e.data_hora " +
++                "FROM execucao_mapeamento e JOIN projeto p ON p.id = e.projeto_id WHERE e.id = ?")) {
++            ps.setLong(1, execucaoId);
++            try (ResultSet rs = ps.executeQuery()) {
++                if (!rs.next()) {
++                    throw new IllegalArgumentException("Execução inexistente: " + execucaoId);
++                }
++                cabecalho = "X|" + esc(rs.getString(1)) + "|" + esc(rs.getString(2)) + "|" + esc(rs.getString(3));
++            }
++        }
++
++        List<String> linhas = new ArrayList<String>();
++
++        try (PreparedStatement ps = conn.prepareStatement(
++                "SELECT classe, code, label, fase, abreviacao, modelo " +
++                "FROM elemento_rastreado WHERE execucao_id = ?")) {
++            ps.setLong(1, execucaoId);
++            try (ResultSet rs = ps.executeQuery()) {
++                while (rs.next()) {
++                    linhas.add("E|" + esc(rs.getString(1)) + "|" + esc(rs.getString(2)) + "|" + esc(rs.getString(3))
++                            + "|" + esc(rs.getString(4)) + "|" + esc(rs.getString(5)) + "|" + esc(rs.getString(6)));
++                }
++            }
++        }
++
++        try (PreparedStatement ps = conn.prepareStatement(
++                "SELECT e.classe, e.code, r.codigo_destino, r.grau " +
++                "FROM relacionamento_rastreabilidade r " +
++                "JOIN elemento_rastreado e ON e.id = r.elemento_origem_id " +
++                "WHERE e.execucao_id = ?")) {
++            ps.setLong(1, execucaoId);
++            try (ResultSet rs = ps.executeQuery()) {
++                while (rs.next()) {
++                    linhas.add("R|" + esc(rs.getString(1)) + "|" + esc(rs.getString(2))
++                            + "|" + esc(rs.getString(3)) + "|" + esc(rs.getString(4)));
++                }
++            }
++        }
++
++        Collections.sort(linhas);
++
++        StringBuilder sb = new StringBuilder();
++        sb.append(VERSAO_FORMATO).append('\n').append(cabecalho).append('\n');
++        for (String l : linhas) {
++            sb.append(l).append('\n');
++        }
++        return sha256Hex(sb.toString());
++    }
++
++    /** Escapa o separador e quebras de linha; null vira texto vazio. */
++    static String esc(String s) {
++        if (s == null) {
++            return "";
++        }
++        return s.replace("\\", "\\\\").replace("|", "\\|").replace("\n", "\\n").replace("\r", "\\r");
++    }
++
++    static String sha256Hex(String texto) {
++        try {
++            MessageDigest md = MessageDigest.getInstance("SHA-256");
++            byte[] h = md.digest(texto.getBytes(StandardCharsets.UTF_8));
++            StringBuilder sb = new StringBuilder(h.length * 2);
++            for (byte b : h) {
++                sb.append(Character.forDigit((b >> 4) & 0xF, 16)).append(Character.forDigit(b & 0xF, 16));
++            }
++            return sb.toString();
++        } catch (NoSuchAlgorithmException e) {
++            throw new IllegalStateException("SHA-256 indisponível nesta JVM", e);
++        }
++    }
++}
+diff --git a/jgoose/src/main/java/br/unioeste/jgoose/persistence/RastreabilidadeDAO.java b/jgoose/src/main/java/br/unioeste/jgoose/persistence/RastreabilidadeDAO.java
+index 70982c4..c6a0a49 100644
+--- a/jgoose/src/main/java/br/unioeste/jgoose/persistence/RastreabilidadeDAO.java
++++ b/jgoose/src/main/java/br/unioeste/jgoose/persistence/RastreabilidadeDAO.java
+@@ -97,4 +97,26 @@ public class RastreabilidadeDAO {
+             psRel.executeBatch();
+         }
+     }
+-}
+\ No newline at end of file
++
++    /** Grava o hash SHA-256 calculado para a execução. */
++    public void salvarHash(long execucaoId, String hashSha256) throws SQLException {
++        try (Connection conn = DatabaseConnection.connect();
++             PreparedStatement ps = conn.prepareStatement(
++                     "UPDATE execucao_mapeamento SET hash_sha256 = ? WHERE id = ?")) {
++            ps.setString(1, hashSha256);
++            ps.setLong(2, execucaoId);
++            ps.executeUpdate();
++        }
++    }
++
++    /** Grava o hash da transação on-chain que registrou o hash desta execução. */
++    public void salvarTxHash(long execucaoId, String txHash) throws SQLException {
++        try (Connection conn = DatabaseConnection.connect();
++             PreparedStatement ps = conn.prepareStatement(
++                     "UPDATE execucao_mapeamento SET tx_hash = ? WHERE id = ?")) {
++            ps.setString(1, txHash);
++            ps.setLong(2, execucaoId);
++            ps.executeUpdate();
++        }
++    }
++}
+diff --git a/urlSepolia b/urlSepolia
+deleted file mode 100644
+index c2b6f99..0000000
+--- a/urlSepolia
++++ /dev/null
+@@ -1 +0,0 @@
+-https://eth-sepolia.g.alchemy.com/v2/alch_UYudQnq_YbnSwsgf_2lTO

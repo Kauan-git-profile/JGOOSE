@@ -1,3 +1,8 @@
 /jgraphx-master/jgraphx-master/target/
 
 *.cpp
+
+# Camada de integridade: segredos e dados locais (nunca versionar)
+jgoose-blockchain.properties
+*.db
+urlSepolia

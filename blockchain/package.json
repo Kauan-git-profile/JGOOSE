@@ -1,0 +1,17 @@
+{
+  "name": "jgoose-blockchain",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "hardhat build",
+    "node": "hardhat node",
+    "deploy:local": "hardhat ignition deploy ignition/modules/RastreabilidadeRegistry.ts --network localhost",
+    "test": "hardhat test"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox-mocha-ethers": "^3.0.0",
+    "hardhat": "^3.0.0",
+    "typescript": "~5.8.0"
+  }
+}
