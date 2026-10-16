@@ -7,22 +7,11 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
-/**
- * Responsável pela conexão com o banco SQLite off-chain do JGOOSE
- * e pela criação do schema de rastreabilidade, caso ainda não exista.
- *
- * Este banco atua como o repositório off-chain descrito no TCC:
- * armazena as estruturas de rastreabilidade brutas extraídas da JGOOSE,
- * servindo de base para o cálculo do hash (SHA-256) que é enviado à camada on-chain.
- */
 public class DatabaseConnection {
 
     private static final String ARQUIVO_PADRAO = "jgoose_rastreabilidade.db";
 
-    /**
-     * Caminho do arquivo .db. Usa a variável de ambiente JGOOSE_DB_PATH, se existir;
-     * caso contrário, o arquivo padrão no diretório de trabalho (de onde o jar foi executado).
-     */
+
     public static String caminhoDoBanco() {
         String v = System.getenv("JGOOSE_DB_PATH");
         return (v == null || v.trim().isEmpty()) ? ARQUIVO_PADRAO : v.trim();
