@@ -94,8 +94,8 @@ public class AuditoriaService {
             sb.append("\n    recalculado (banco agora): ").append(hashRecalculado);
             for (BlockchainService.RegistroOnChain r : versoes) {
                 sb.append("\n    on-chain v").append(r.versao).append("             : ").append(r.hash)
-                  .append("  (").append(Instant.ofEpochSecond(r.timestamp.longValue()))
-                  .append(", por ").append(r.responsavel).append(")");
+                  .append("\n                               registrado em ").append(Instant.ofEpochSecond(r.timestamp.longValue()))
+                  .append(" por ").append(r.responsavel);
             }
             if (colunaHashDesatualizada()) {
                 sb.append("\n    ATENÇÃO: o hash salvo na coluna hash_sha256 (").append(hashSalvoNoBanco)
@@ -145,6 +145,18 @@ public class AuditoriaService {
             }
         }
         return ids;
+    }
+
+    /** Nome do projeto a que a execução pertence (para exibir na tela). */
+    public String nomeDoProjeto(long execucaoId) throws SQLException {
+        try (Connection conn = DatabaseConnection.connect();
+             PreparedStatement ps = conn.prepareStatement(
+                     "SELECT p.nome FROM execucao_mapeamento e JOIN projeto p ON p.id = e.projeto_id WHERE e.id = ?")) {
+            ps.setLong(1, execucaoId);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? rs.getString(1) : "";
+            }
+        }
     }
 
     private String lerHashSalvo(long execucaoId) throws SQLException {

@@ -5,6 +5,7 @@ import br.unioeste.jgoose.TraceabilityHorizontal.TraceBPMNVertical;
 import br.unioeste.jgoose.TraceabilityHorizontal.TraceIStarHorizontal;
 import br.unioeste.jgoose.TraceabilityHorizontal.TraceIStarVertical;
 import br.unioeste.jgoose.TraceabilityHorizontal.TraceUCHorizontal;
+import br.unioeste.jgoose.blockchain.AuditoriaDialog;
 import br.unioeste.jgoose.UseCases.Actor;
 import br.unioeste.jgoose.controller.BPMNController;
 import br.unioeste.jgoose.controller.Controller;
@@ -129,6 +130,7 @@ public final class TraceabilityView1 extends javax.swing.JFrame {
         this.type = type;
         this.elementTracedReport = new ArrayList<>();
         initComponents();
+        AuditoriaDialog.instalarMenu(this); // menu "Integridade > Auditar com a blockchain..."
         Image Icone;
         Icone = Toolkit.getDefaultToolkit().getImage("./src/main/resources/icons/jgoose.gif");
         setIconImage(Icone);
