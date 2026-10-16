@@ -40,7 +40,6 @@ public class AuditoriaService {
         public final String hashRecalculado;
         public final String hashSalvoNoBanco;
         public final List<BlockchainService.RegistroOnChain> versoes;
-        /** Versão (1..n) igual ao hash recalculado, ou 0 se nenhuma. */
         public final int versaoCorrespondente;
 
         Resultado(long execucaoId, Status status, String hashRecalculado, String hashSalvoNoBanco,
@@ -53,17 +52,14 @@ public class AuditoriaService {
             this.versaoCorrespondente = versaoCorrespondente;
         }
 
-        /** True se o hash guardado na coluna do banco difere do recalculado (os dados mudaram depois do registro). */
         public boolean colunaHashDesatualizada() {
             return hashSalvoNoBanco != null && !hashSalvoNoBanco.equalsIgnoreCase(hashRecalculado);
         }
 
-        /** True se a execução tem mais de uma versão registrada on-chain. */
         public boolean registrosSuspeitos() {
             return versoes.size() > 1;
         }
 
-        /** True se alguma versão foi gravada por uma conta diferente da que gravou a primeira. */
         public boolean registrantesDiferentes() {
             for (BlockchainService.RegistroOnChain r : versoes) {
                 if (!r.responsavel.equalsIgnoreCase(versoes.get(0).responsavel)) {
