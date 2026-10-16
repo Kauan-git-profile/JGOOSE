@@ -56,14 +56,10 @@ import org.web3j.utils.Numeric;
  */
 public class BlockchainService {
 
-    /** Uma versão do hash registrada on-chain para uma execução. */
     public static class RegistroOnChain {
-        /** Número da versão (1 = primeiro registro). */
         public final int versao;
-        /** SHA-256 em hexadecimal minúsculo (64 caracteres). */
         public final String hash;
         public final BigInteger timestamp;
-        /** Endereço da conta que gravou. */
         public final String responsavel;
 
         RegistroOnChain(int versao, String hash, BigInteger timestamp, String responsavel) {
@@ -78,7 +74,6 @@ public class BlockchainService {
     private static final Pattern ENDERECO = Pattern.compile("^0x[0-9a-fA-F]{40}$");
     private static final Pattern CHAVE_PRIVADA = Pattern.compile("^(0x)?[0-9a-fA-F]{64}$");
     private static final Pattern HASH_SHA256 = Pattern.compile("^[0-9a-fA-F]{64}$");
-    /** SHA-256 da string vazia; usado só no teste rápido (main). */
     private static final String SHA256_DE_TESTE = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
 
     private final Web3j web3j;
@@ -86,7 +81,6 @@ public class BlockchainService {
     private final String contractAddress;
     private final long chainId;
 
-    /** True se a chave privada e o endereço do contrato estão configurados. */
     public static boolean configurado() {
         Properties arq = carregarArquivo();
         return valor("JGOOSE_PRIVATE_KEY", null, arq) != null
@@ -116,11 +110,7 @@ public class BlockchainService {
         this.web3j = Web3j.build(new HttpService(rpcUrl));
     }
 
-    /**
-     * Registra uma NOVA versão do hash para a execução e espera a confirmação.
-     * @param hashSha256Hex SHA-256 em hexadecimal (64 caracteres), o mesmo guardado em hash_sha256
-     * @return o hash da transação (txHash)
-     */
+
     public String registrarHash(long execucaoId, String hashSha256Hex) {
         try {
             verificarRede();
@@ -132,7 +122,6 @@ public class BlockchainService {
             String data = FunctionEncoder.encode(fn);
             String from = credentials.getAddress();
 
-            // A estimativa de gas também revela, antes de enviar, se o contrato vai recusar o registro.
             EthEstimateGas est = web3j.ethEstimateGas(
                     Transaction.createEthCallTransaction(from, contractAddress, data)).send();
             if (est.hasError()) {
@@ -161,7 +150,6 @@ public class BlockchainService {
         }
     }
 
-    /** Quantas versões de hash existem on-chain para a execução (0 = nunca registrada). */
     public long quantidadeRegistros(long execucaoId) {
         Function fn = new Function(
                 "quantidadeRegistros",
@@ -171,7 +159,6 @@ public class BlockchainService {
         return ((BigInteger) out.get(0).getValue()).longValue();
     }
 
-    /** Lê uma versão específica (indice começa em 0; versão = indice + 1). */
     public RegistroOnChain obterRegistro(long execucaoId, long indice) {
         Function fn = new Function(
                 "obterRegistro",
@@ -189,7 +176,6 @@ public class BlockchainService {
                 (String) out.get(2).getValue());
     }
 
-    /** Todas as versões registradas para a execução, da mais antiga para a mais recente. */
     public List<RegistroOnChain> obterTodos(long execucaoId) {
         long n = quantidadeRegistros(execucaoId);
         List<RegistroOnChain> lista = new ArrayList<RegistroOnChain>();
@@ -232,11 +218,7 @@ public class BlockchainService {
         return new Bytes32(Numeric.hexStringToByteArray(hexSha256));
     }
 
-    /**
-     * Confere a rede (Chain ID) e se existe mesmo um contrato no endereço configurado.
-     * Sem a segunda checagem, um endereço errado (ex.: nó local reiniciado, contrato perdido)
-     * faria o envio "dar certo" sem registrar nada.
-     */
+
     private void verificarRede() throws IOException {
         EthChainId r = web3j.ethChainId().send();
         if (r.hasError()) {
@@ -268,7 +250,6 @@ public class BlockchainService {
         return p;
     }
 
-    /** Variável de ambiente > arquivo de propriedades > padrão. Vazio conta como ausente. */
     private static String valor(String nome, String padrao, Properties arq) {
         String v = System.getenv(nome);
         if (v == null || v.trim().isEmpty()) {
@@ -288,7 +269,6 @@ public class BlockchainService {
         return v;
     }
 
-    /** Teste rápido sem a interface: registra um hash fictício num id alto e lê de volta. */
     public static void main(String[] args) {
         BlockchainService s = new BlockchainService();
         long id = 900000000L + (System.currentTimeMillis() % 1000000L);
