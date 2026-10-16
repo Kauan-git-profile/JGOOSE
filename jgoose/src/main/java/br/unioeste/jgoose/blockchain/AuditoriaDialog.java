@@ -42,7 +42,6 @@ public class AuditoriaDialog {
     private static final Color AMARELO = new Color(0xFFF1C2);
     private static final Color VERMELHO = new Color(0xF8CFCF);
 
-    /** Instala o menu "Integridade > Auditar com a blockchain..." na janela (sem mexer no layout dela). */
     public static void instalarMenu(final JFrame janela) {
         JMenuBar barra = janela.getJMenuBar();
         if (barra == null) {
@@ -61,7 +60,6 @@ public class AuditoriaDialog {
         barra.add(menu);
     }
 
-    /** Abre a janela e inicia a auditoria. */
     public static JDialog abrir(Component pai) {
         final JDialog dialogo = new JDialog(pai == null ? null : javax.swing.SwingUtilities.getWindowAncestor(pai),
                 "Auditoria de integridade (banco x blockchain)");
@@ -183,7 +181,6 @@ public class AuditoriaDialog {
         }
     }
 
-    /** Resultado do trabalho em segundo plano. */
     private static class Saida {
         final List<AuditoriaService.Resultado> resultados = new ArrayList<AuditoriaService.Resultado>();
         final List<String> projetos = new ArrayList<String>();
