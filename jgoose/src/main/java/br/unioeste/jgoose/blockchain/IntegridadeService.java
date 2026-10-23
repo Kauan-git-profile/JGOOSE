@@ -48,4 +48,22 @@ public class IntegridadeService {
             }
         }
     }
+
+    /**
+     * Dispara {@link #registrarExecucao} em uma thread de fundo, para não travar a interface.
+     * Usado tanto pela rastreabilidade horizontal quanto pela vertical.
+     */
+    public static void registrarEmSegundoPlano(final long execucaoId) {
+        if (execucaoId <= 0) {
+            return;
+        }
+        Thread integridade = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                System.out.println(registrarExecucao(execucaoId));
+            }
+        }, "jgoose-integridade-" + execucaoId);
+        integridade.setDaemon(true);
+        integridade.start();
+    }
 }

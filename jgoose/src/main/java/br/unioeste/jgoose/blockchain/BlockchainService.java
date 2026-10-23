@@ -81,6 +81,9 @@ public class BlockchainService {
     /** SHA-256 da string vazia; usado só no teste rápido (main). */
     private static final String SHA256_DE_TESTE = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
 
+    /** Serializa os envios de transações desta conta: sem isso, duas threads leem o mesmo nonce. */
+    private static final Object LOCK_ENVIO = new Object();
+
     private final Web3j web3j;
     private final Credentials credentials;
     private final String contractAddress;
@@ -122,6 +125,7 @@ public class BlockchainService {
      * @return o hash da transação (txHash)
      */
     public String registrarHash(long execucaoId, String hashSha256Hex) {
+        synchronized (LOCK_ENVIO) {
         try {
             verificarRede();
 
@@ -158,6 +162,7 @@ public class BlockchainService {
             throw e;
         } catch (Exception e) {
             throw new IllegalStateException("Falha ao registrar hash on-chain: " + e.getMessage(), e);
+        }
         }
     }
 

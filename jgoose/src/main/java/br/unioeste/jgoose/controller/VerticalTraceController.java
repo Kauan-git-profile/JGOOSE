@@ -14,6 +14,9 @@ import br.unioeste.jgoose.view.TraceabilityView;
 import br.unioeste.jgoose.view.TraceabilityView1;
 import br.unioeste.jgoose.view.UseCasesViewBPMN;
 import br.unioeste.jgoose.view.UseCasesViewIStar;
+import br.unioeste.jgoose.blockchain.IntegridadeService;
+import br.unioeste.jgoose.persistence.DatabaseConnection;
+import br.unioeste.jgoose.persistence.RastreabilidadeDAO;
 import java.awt.event.ActionEvent;
 import javax.swing.AbstractAction;
 import javax.swing.JFrame;
@@ -251,9 +254,22 @@ public class VerticalTraceController extends AbstractAction {
         return tokensTraceability;
     }
 
+    /**
+     * True somente enquanto o usuário aciona a GERAÇÃO da matriz vertical (menu "Vertical Traceability").
+     * Os botões de navegação que apenas reabrem a tela chamam openVerticalTraceabilityView() diretamente,
+     * o que regenera a matriz; nesse caso nada deve ser gravado, senão cada clique criaria uma nova
+     * execução no banco e uma nova transação na blockchain.
+     */
+    private static boolean gravarNestaGeracao = false;
+
     @Override
     public void actionPerformed(ActionEvent e) {
-        openVerticalTraceabilityView();
+        gravarNestaGeracao = true;
+        try {
+            openVerticalTraceabilityView();
+        } finally {
+            gravarNestaGeracao = false;
+        }
     }
 
     public static void openVerticalTraceabilityView() {
@@ -264,6 +280,7 @@ public class VerticalTraceController extends AbstractAction {
                     if (BPMNController.getFlagMapUseCases()) {
                         traceBPMNVertical = new TraceBPMNVertical();
                         traceBPMNVertical.TraceElementsBPMNVertical();
+                        persistirVertical(TraceBPMNVertical.getLista(), "BPMN -> UC Vertical", E4JBPMN, "BPMN");
                         index = 4;
                     } else {
                         JOptionPane.showMessageDialog(null, "YOU NEED FIRST MAPPING BPMN to Use Cases");
@@ -273,6 +290,7 @@ public class VerticalTraceController extends AbstractAction {
                     if (Controller.getFlagMapUseCases()) {
                         traceIStarVertical = new TraceIStarVertical();
                         traceIStarVertical.TraceElementsIStarVertical();
+                        persistirVertical(TraceIStarVertical.getLista(), "i* -> UC Vertical", E4JiStar, "I *");
                         index = 5;
                     } else {
                         JOptionPane.showMessageDialog(null, "YOU NEED FIRST MAPPING i* to Use Cases");
@@ -307,6 +325,33 @@ public class VerticalTraceController extends AbstractAction {
         } else {
             JOptionPane.showMessageDialog(null, "You need Mapping Vertical first");
         }
+    }
+
+    /**
+     * Persiste no SQLite a rastreabilidade vertical recém-gerada (Stakeholders e Requisitos dos
+     * dois modelos) e registra o hash da execução na blockchain em segundo plano.
+     * Falhas aqui não podem impedir a exibição da matriz.
+     */
+    private static void persistirVertical(TokensTraceability tokens, String origem,
+                                          EditorJFrame editorFonte, String modeloFonte) {
+        if (!gravarNestaGeracao) {
+            return;
+        }
+        try {
+            DatabaseConnection.criarSchema();
+            long execucaoId = new RastreabilidadeDAO().salvarVertical(
+                    tokens, origem, nomeDoProjeto(editorFonte), modeloFonte, "Use Case");
+            IntegridadeService.registrarEmSegundoPlano(execucaoId);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+
+    /** Nome do projeto = nome do arquivo aberto no editor do modelo-fonte (BPMN ou i*). */
+    private static String nomeDoProjeto(EditorJFrame editor) {
+        java.io.File arquivo = (editor != null && editor.getEditor() != null)
+                ? editor.getEditor().getCurrentFile() : null;
+        return (arquivo != null) ? arquivo.getName().replaceFirst("\\.mxe$", "") : "Sem título";
     }
 
     private static void setVisebleFalse() {

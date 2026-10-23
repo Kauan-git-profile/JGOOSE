@@ -72,7 +72,7 @@ public class AuditoriaDialog {
         resumo.setFont(resumo.getFont().deriveFont(Font.BOLD, 14f));
 
         final DefaultTableModel modelo = new DefaultTableModel(
-                new Object[]{"Execução", "Projeto", "Resultado", "Versões on-chain"}, 0) {
+                new Object[]{"Execução", "Projeto", "Origem", "Resultado", "Versões on-chain"}, 0) {
             @Override
             public boolean isCellEditable(int r, int c) {
                 return false;
@@ -81,8 +81,8 @@ public class AuditoriaDialog {
         final JTable tabela = new JTable(modelo);
         tabela.setRowHeight(24);
         tabela.getColumnModel().getColumn(0).setMaxWidth(90);
-        tabela.getColumnModel().getColumn(3).setMinWidth(130);
-        tabela.getColumnModel().getColumn(3).setMaxWidth(150);
+        tabela.getColumnModel().getColumn(4).setMinWidth(130);
+        tabela.getColumnModel().getColumn(4).setMaxWidth(150);
         final List<AuditoriaService.Resultado> resultados = new ArrayList<AuditoriaService.Resultado>();
 
         tabela.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
@@ -178,6 +178,8 @@ public class AuditoriaDialog {
                 return "ALERTA DE ADULTERAÇÃO";
             case VERSAO_ANTERIOR:
                 return "DESATUALIZADO";
+            case ERRO:
+                return "ERRO NA AUDITORIA";
             default:
                 return "NÃO REGISTRADO";
         }
@@ -187,6 +189,7 @@ public class AuditoriaDialog {
     private static class Saida {
         final List<AuditoriaService.Resultado> resultados = new ArrayList<AuditoriaService.Resultado>();
         final List<String> projetos = new ArrayList<String>();
+        final List<String> origens = new ArrayList<String>();
         String erro;
     }
 
@@ -219,8 +222,9 @@ public class AuditoriaDialog {
                     chain = new BlockchainService();
                     AuditoriaService svc = new AuditoriaService();
                     for (Long id : svc.listarExecucoes()) {
-                        saida.resultados.add(svc.auditar(chain, id.longValue()));
+                        saida.resultados.add(svc.auditarSeguro(chain, id.longValue()));
                         saida.projetos.add(svc.nomeDoProjeto(id.longValue()));
+                        saida.origens.add(svc.origemDaExecucao(id.longValue()));
                     }
                 } catch (Exception e) {
                     saida.erro = "Erro na auditoria: " + e.getMessage();
@@ -255,7 +259,7 @@ public class AuditoriaDialog {
                 for (int i = 0; i < saida.resultados.size(); i++) {
                     AuditoriaService.Resultado r = saida.resultados.get(i);
                     resultados.add(r);
-                    modelo.addRow(new Object[]{r.execucaoId, saida.projetos.get(i), textoDoStatus(r.status), r.versoes.size()});
+                    modelo.addRow(new Object[]{r.execucaoId, saida.projetos.get(i), saida.origens.get(i), textoDoStatus(r.status), r.versoes.size()});
                     if (r.status == AuditoriaService.Status.INTEGRO) {
                         integras++;
                     } else if (r.status == AuditoriaService.Status.DIVERGENTE) {

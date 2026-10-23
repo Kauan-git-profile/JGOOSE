@@ -50,6 +50,8 @@ public class DatabaseConnection {
             "  origem TEXT," +
             "  hash_sha256 TEXT," +          // SHA-256 dos dados desta execução (calculado após salvar)
             "  tx_hash TEXT," +              // hash da transação on-chain que registrou o hash acima
+            "  tipo_rastreabilidade TEXT," + // HORIZONTAL ou VERTICAL
+            "  formato_hash TEXT," +         // formato canônico usado no hash (NULL = execução antiga, V1)
             "  FOREIGN KEY (projeto_id) REFERENCES projeto(id)" +
             ");";
 
@@ -71,6 +73,7 @@ public class DatabaseConnection {
             "  elemento_origem_id INTEGER NOT NULL," +
             "  codigo_destino TEXT NOT NULL," +
             "  grau TEXT NOT NULL," +
+            "  modelo_destino TEXT," +       // modelo do elemento de destino (essencial na vertical: BPMN/i* x Use Case)
             "  FOREIGN KEY (elemento_origem_id) REFERENCES elemento_rastreado(id)" +
             ");";
 
@@ -83,6 +86,11 @@ public class DatabaseConnection {
 
             // Migração: bancos criados antes desta versão não têm a coluna tx_hash.
             garantirColuna(conn, "execucao_mapeamento", "tx_hash", "TEXT");
+            // Migração para a rastreabilidade vertical: bancos antigos ganham as colunas novas
+            // vazias (NULL). Execuções antigas continuam sendo auditadas com o formato V1.
+            garantirColuna(conn, "execucao_mapeamento", "tipo_rastreabilidade", "TEXT");
+            garantirColuna(conn, "execucao_mapeamento", "formato_hash", "TEXT");
+            garantirColuna(conn, "relacionamento_rastreabilidade", "modelo_destino", "TEXT");
         } catch (SQLException e) {
             e.printStackTrace();
         }

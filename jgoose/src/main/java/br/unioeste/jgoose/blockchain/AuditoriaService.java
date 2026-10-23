@@ -31,7 +31,9 @@ public class AuditoriaService {
         /** Não é igual a nenhuma versão registrada: indício de adulteração do banco. */
         DIVERGENTE,
         /** A execução nunca foi registrada on-chain. */
-        NAO_REGISTRADO_ONCHAIN
+        NAO_REGISTRADO_ONCHAIN,
+        /** Não foi possível auditar a execução (formato de hash desconhecido, falha de rede etc.). */
+        ERRO
     }
 
     public static class Resultado {
@@ -42,6 +44,8 @@ public class AuditoriaService {
         public final List<BlockchainService.RegistroOnChain> versoes;
         /** Versão (1..n) igual ao hash recalculado, ou 0 se nenhuma. */
         public final int versaoCorrespondente;
+        /** Preenchido apenas quando o status é ERRO. */
+        public final String mensagemErro;
 
         Resultado(long execucaoId, Status status, String hashRecalculado, String hashSalvoNoBanco,
                   List<BlockchainService.RegistroOnChain> versoes, int versaoCorrespondente) {
@@ -51,6 +55,17 @@ public class AuditoriaService {
             this.hashSalvoNoBanco = hashSalvoNoBanco;
             this.versoes = versoes;
             this.versaoCorrespondente = versaoCorrespondente;
+            this.mensagemErro = null;
+        }
+
+        private Resultado(long execucaoId, String mensagemErro) {
+            this.execucaoId = execucaoId;
+            this.status = Status.ERRO;
+            this.hashRecalculado = null;
+            this.hashSalvoNoBanco = null;
+            this.versoes = new ArrayList<BlockchainService.RegistroOnChain>();
+            this.versaoCorrespondente = 0;
+            this.mensagemErro = mensagemErro;
         }
 
         /** True se o hash guardado na coluna do banco difere do recalculado (os dados mudaram depois do registro). */
@@ -74,6 +89,9 @@ public class AuditoriaService {
         }
 
         public String descricao() {
+            if (status == Status.ERRO) {
+                return "Execução " + execucaoId + ": ERRO NA AUDITORIA - " + mensagemErro;
+            }
             StringBuilder sb = new StringBuilder();
             sb.append("Execução ").append(execucaoId).append(": ");
             switch (status) {
@@ -135,6 +153,18 @@ public class AuditoriaService {
         return new Resultado(execucaoId, Status.DIVERGENTE, recalculado, salvo, versoes, 0);
     }
 
+    /**
+     * Como {@link #auditar}, mas um problema em UMA execução (formato desconhecido, falha de rede)
+     * vira um resultado ERRO em vez de interromper a auditoria das demais.
+     */
+    public Resultado auditarSeguro(BlockchainService chain, long execucaoId) {
+        try {
+            return auditar(chain, execucaoId);
+        } catch (Exception e) {
+            return new Resultado(execucaoId, e.getMessage() != null ? e.getMessage() : e.toString());
+        }
+    }
+
     public List<Long> listarExecucoes() throws SQLException {
         List<Long> ids = new ArrayList<Long>();
         try (Connection conn = DatabaseConnection.connect();
@@ -155,6 +185,19 @@ public class AuditoriaService {
             ps.setLong(1, execucaoId);
             try (ResultSet rs = ps.executeQuery()) {
                 return rs.next() ? rs.getString(1) : "";
+            }
+        }
+    }
+
+    /** Origem da execução (ex.: "UC Horizontal", "BPMN -> UC Vertical", "i* -> UC Vertical"). */
+    public String origemDaExecucao(long execucaoId) throws SQLException {
+        try (Connection conn = DatabaseConnection.connect();
+             PreparedStatement ps = conn.prepareStatement(
+                     "SELECT origem FROM execucao_mapeamento WHERE id = ?")) {
+            ps.setLong(1, execucaoId);
+            try (ResultSet rs = ps.executeQuery()) {
+                String o = rs.next() ? rs.getString(1) : null;
+                return (o != null) ? o : "";
             }
         }
     }
@@ -205,9 +248,11 @@ public class AuditoriaService {
                 System.out.println("Nenhuma execução no banco.");
             }
             for (Long id : ids) {
-                Resultado r = svc.auditar(chain, id.longValue());
+                Resultado r = svc.auditarSeguro(chain, id.longValue());
                 System.out.println(r.descricao());
-                if (r.status != Status.INTEGRO) {
+                if (r.status == Status.ERRO) {
+                    codigo = 3;
+                } else if (r.status != Status.INTEGRO && codigo == 0) {
                     codigo = 2;
                 }
             }
