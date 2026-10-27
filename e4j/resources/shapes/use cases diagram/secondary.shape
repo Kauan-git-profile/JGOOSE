@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<shape xmlns="http://www.daa.com.au/~james/dia-shape-ns" xmlns:svg="http://www.w3.org/2000/svg">
+  <name>Secondary Actor</name>
+  <icon>secondary_actor.png</icon>
+  <connections>
+    <point x="-3.22777" y="-6.36842"/>
+    <point x="-3.22777" y="-6.96842"/>
+    <point x="-3.52777" y="-6.66842"/>
+    <point x="-2.92777" y="-6.66842"/>
+    <point x="-4.42777" y="-6.06842"/>
+    <point x="-2.02777" y="-6.06842"/>
+    <point x="-3.22777" y="-6.06842"/>
+    <point x="-3.22777" y="-6.36842"/>
+    <point x="-3.22777" y="-4.86842"/>
+    <point x="-3.22777" y="-5.61842"/>
+    <point x="-3.22777" y="-4.86842"/>
+    <point x="-4.42777" y="-3.56842"/>
+    <point x="-3.82777" y="-4.21842"/>
+    <point x="-3.22777" y="-4.86842"/>
+    <point x="-2.02777" y="-3.56842"/>
+    <point x="-2.62777" y="-4.21842"/>
+  </connections>
+  <aspectratio type="fixed"/>
+  <svg:svg>
+    <svg:ellipse style="fill: #ffffff" cx="-3.22777" cy="-6.66842" rx="0.3" ry="0.3"/>
+    <svg:ellipse style="fill: #ffffff; fill-opacity:0; stroke-width: 0.1; stroke: #000000" cx="-3.22777" cy="-6.66842" rx="0.3" ry="0.3"/>
+    <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-4.42777" y1="-6.06842" x2="-2.02777" y2="-6.06842"/>
+    <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-3.22777" y1="-6.36842" x2="-3.22777" y2="-4.86842"/>
+    <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-3.22777" y1="-4.86842" x2="-4.42777" y2="-3.56842"/>
+    <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-3.22777" y1="-4.86842" x2="-2.02777" y2="-3.56842"/>
+    <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-4.51" y1="-2.76" x2="-4.69" y2="-2.9"/>
+    <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-4.69" y1="-2.9" x2="-4.51" y2="-3.08"/>
+
+    <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-4.44" y1="-2.8" x2="-4.57" y2="-2.91"/>
+    <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-4.57" y1="-2.91" x2="-4.46" y2="-3.02"/>
+
+    <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-4.13" y1="-3.09" x2="-4.31" y2="-3.01"/>
+    <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-4.31" y1="-3.01" x2="-4.07" y2="-2.83"/>
+    <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-4.07" y1="-2.83" x2="-4.31" y2="-2.79"/>
+
+    <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-3.78" y1="-3.09" x2="-4.0" y2="-3.08"/>
+    <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-4.0" y1="-3.08" x2="-4" y2="-2.96"/>
+    <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-4" y1="-2.96" x2="-3.89" y2="-2.96"/>
+    <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-4" y1="-2.96" x2="-4" y2="-2.8"/>
+    <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-4" y1="-2.8" x2="-3.78" y2="-2.79"/>
+
+    <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-3.47" y1="-3.09" x2="-3.68" y2="-3.07"/>
+    <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-3.68" y1="-3.07" x2="-3.67" y2="-2.82"/>
+    <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-3.67" y1="-2.82" x2="-3.48" y2="-2.8"/>
+
+   <svg:ellipse style="fill: #ffffff; fill-opacity:0; stroke-width: 0.1; stroke: #000000" cx="-3.31" cy="-2.94" rx="0.14" ry="0.14"/>
+
+   <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-3.14" y1="-2.79" x2="-3.14" y2="-3.09"/>
+   <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-3.14" y1="-3.09" x2="-2.98" y2="-2.8"/>
+   <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-2.98" y1="-2.8" x2="-2.99" y2="-3.09"/>
+
+   <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-2.92" y1="-3.09" x2="-2.92" y2="-2.8"/>
+   <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-2.92" y1="-2.79" x2="-2.8" y2="-2.85"/>
+   <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-2.8" y1="-2.85" x2="-2.78" y2="-3.02"/>
+   <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-2.78" y1="-3.02" x2="-2.92" y2="-3.09"/>
+
+   <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-2.75" y1="-2.8" x2="-2.67" y2="-3.09"/>
+   <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-2.67" y1="-3.09" x2="-2.58" y2="-2.8"/>
+   <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-2.72" y1="-2.92" x2="-2.62" y2="-2.92"/>
+
+   <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-2.54" y1="-2.8" x2="-2.55" y2="-3.09"/>
+   <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-2.55" y1="-3.09" x2="-2.4" y2="-3.02"/>
+   <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-2.4" y1="-3.02" x2="-2.55" y2="-2.92"/>
+   <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-2.55" y1="-2.92" x2="-2.4" y2="-2.8"/>
+
+   <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-2.34" y1="-3.09" x2="-2.2" y2="-2.94"/>
+   <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-2.15" y1="-3.06" x2="-2.27" y2="-2.8"/>
+
+   <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-2" y1="-3.09" x2="-1.78" y2="-2.94"/>
+   <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-1.78" y1="-2.94" x2="-2" y2="-2.8"/>
+
+   <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-2" y1="-3.02" x2="-1.89" y2="-2.95"/>
+   <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-1.89" y1="-2.95" x2="-2.01" y2="-2.88"/>
+   
+   <svg:text style="fill: #000000; text-anchor:middle; font-family: sans; font-style: normal; font-weight: normal" x="-3.22777" y="-2.32842" font-size="0.8" textLength="1.185">Secondary Actor</svg:text>
+  </svg:svg>
+</shape>

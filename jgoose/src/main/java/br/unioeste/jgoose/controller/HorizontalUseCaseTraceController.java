@@ -269,13 +269,10 @@ public class HorizontalUseCaseTraceController extends AbstractAction {
             Object[] cells = this.selectAll();
 
             // filter cells and put them in the map structure (elements and links)
-            // 1) compute all vertex
+            // 1) compute all vertex, including the ones nested in containers
+            //    (the use cases are usually drawn inside the system boundary)
             for (Object c : cells) {
-                mxCell cell = (mxCell) c;
-
-                if (cell.isVertex()) {
-                    this.convertVertex(cell);
-                }
+                findVertices((mxCell) c);
             }
 
             // 2) compute all edges
@@ -385,6 +382,20 @@ public class HorizontalUseCaseTraceController extends AbstractAction {
             }
         }
         return result;
+    }
+
+    /**
+     * Converts the vertex and all of its descendants. selectAll() only returns the root cells, so the
+     * elements placed inside a container (e.g. the system boundary) would be ignored, while the edges
+     * that touch them were still found by findEdges(), producing "mapped source/target dont founded".
+     */
+    private void findVertices(mxCell cell) {
+        if (cell.isVertex()) {
+            this.convertVertex(cell);
+        }
+        for (int i = 0; i < cell.getChildCount(); i++) {
+            findVertices((mxCell) cell.getChildAt(i));
+        }
     }
 
     private void findEdges(mxCell cell) {

@@ -1,0 +1,6 @@
+caso,alteracao,hash_recalculado,status_obtido,resultado_esperado,passou,observacao
+I00_BASELINE,Nenhuma,b0840e06ea70d6f433814cacbdd673b1becfdbd5c636746aa3223de47f7f2a9a,DIVERGENTE,INTEGRO,False,
+I01_ROTULO,Alterar rótulo de elemento,aecf37f11423d79c99913917b2ae93d95cab7690e37677e94563f6de8e9abe16,DIVERGENTE,DIVERGENTE,True,
+I02_RELACAO_GRAU,Alterar grau de relação,,NAO_EXECUTADO,DIVERGENTE,False,Não há relacionamento para alterar.
+I03_EXCLUSAO,Excluir elemento e suas relações de saída,d5bb33d96407af2b3500e0cc4fe18205430f0badfdf44572108c119a21d8208f,DIVERGENTE,DIVERGENTE,True,
+I04_INSERCAO_RELACAO,Inserir relação sintética,67a0b6eacd944ee5b0fcb94a1693c4a66e535f1acc1327ab72fbc59e4d81bbc4,DIVERGENTE,DIVERGENTE,True,

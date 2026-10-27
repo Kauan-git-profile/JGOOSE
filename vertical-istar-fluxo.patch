@@ -1,0 +1,121 @@
+diff --git a/jgoose/src/main/java/br/unioeste/jgoose/controller/ImportIStarGraph.java b/jgoose/src/main/java/br/unioeste/jgoose/controller/ImportIStarGraph.java
+index 17afd3c..9f2d9b3 100644
+--- a/jgoose/src/main/java/br/unioeste/jgoose/controller/ImportIStarGraph.java
++++ b/jgoose/src/main/java/br/unioeste/jgoose/controller/ImportIStarGraph.java
+@@ -144,7 +144,9 @@ public class ImportIStarGraph extends AbstractAction {
+             if(Controller.getFlagPreferences()){
+                 mainView.setE4JiStar(E4JiStar);
+                 mainView.iStarUCView();
+-                this.E4JiStar.setVisible(false);
++                if (this.E4JiStar != null) {
++                    this.E4JiStar.setVisible(false);
++                }
+             }
+         } else {
+             JOptionPane.showMessageDialog(null, "For Map Use Cases you need select an Actor as a System", "ERROR!", JOptionPane.ERROR_MESSAGE);
+diff --git a/jgoose/src/main/java/br/unioeste/jgoose/controller/VerticalTraceController.java b/jgoose/src/main/java/br/unioeste/jgoose/controller/VerticalTraceController.java
+index 50557ce..1554fa3 100644
+--- a/jgoose/src/main/java/br/unioeste/jgoose/controller/VerticalTraceController.java
++++ b/jgoose/src/main/java/br/unioeste/jgoose/controller/VerticalTraceController.java
+@@ -45,8 +45,22 @@ public class VerticalTraceController extends AbstractAction {
+     private static UseCasesViewBPMN useCasesViewBPMN = null;
+     private static UseCasesViewIStar useCasesViewIStar = null;
+ 
++    // Contexto deste item de menu. Os campos estáticos abaixo são compartilhados por TODAS as instâncias e
++    // cada construtor os sobrescreve; sem guardar o contexto da instância, o último menu montado (por
++    // exemplo, o do diagrama de casos de uso, de tipo BPMN) decidiria o tipo da rastreabilidade.
++    private final int tipoDoMenu;
++    private final EditorJFrame menuE4JiStar, menuE4JBPMN, menuE4JUseCases;
++    private final UseCasesViewIStar menuViewIStar;
++    private final UseCasesViewBPMN menuViewBPMN;
++
+     public VerticalTraceController(EditorJFrame E4JiStar, EditorJFrame E4JBPMN, EditorJFrame E4JUseCases,
+             UseCasesViewIStar useCasesViewIStar, UseCasesViewBPMN useCasesViewBPMN, int i) {
++        this.tipoDoMenu = i;
++        this.menuE4JiStar = E4JiStar;
++        this.menuE4JBPMN = E4JBPMN;
++        this.menuE4JUseCases = E4JUseCases;
++        this.menuViewIStar = useCasesViewIStar;
++        this.menuViewBPMN = useCasesViewBPMN;
+ 
+         this.E4JBPMN = E4JBPMN;
+         this.E4JiStar = E4JiStar;
+@@ -254,22 +268,17 @@ public class VerticalTraceController extends AbstractAction {
+         return tokensTraceability;
+     }
+ 
+-    /**
+-     * True somente enquanto o usuário aciona a GERAÇÃO da matriz vertical (menu "Vertical Traceability").
+-     * Os botões de navegação que apenas reabrem a tela chamam openVerticalTraceabilityView() diretamente,
+-     * o que regenera a matriz; nesse caso nada deve ser gravado, senão cada clique criaria uma nova
+-     * execução no banco e uma nova transação na blockchain.
+-     */
+-    private static boolean gravarNestaGeracao = false;
+ 
+     @Override
+     public void actionPerformed(ActionEvent e) {
+-        gravarNestaGeracao = true;
+-        try {
+-            openVerticalTraceabilityView();
+-        } finally {
+-            gravarNestaGeracao = false;
+-        }
++        // restaura o contexto do menu que foi clicado (ver comentário dos campos acima)
++        type = tipoDoMenu;
++        if (menuE4JiStar != null) E4JiStar = menuE4JiStar;
++        if (menuE4JBPMN != null) E4JBPMN = menuE4JBPMN;
++        if (menuE4JUseCases != null) E4JUseCases = menuE4JUseCases;
++        if (menuViewIStar != null) useCasesViewIStar = menuViewIStar;
++        if (menuViewBPMN != null) useCasesViewBPMN = menuViewBPMN;
++        openVerticalTraceabilityView();
+     }
+ 
+     public static void openVerticalTraceabilityView() {
+@@ -334,9 +343,9 @@ public class VerticalTraceController extends AbstractAction {
+      */
+     private static void persistirVertical(TokensTraceability tokens, String origem,
+                                           EditorJFrame editorFonte, String modeloFonte) {
+-        if (!gravarNestaGeracao) {
+-            return;
+-        }
++        // Grava em toda geração (menu ou botões laterais). Não há duplicação: o DAO reaproveita a
++        // execução do mesmo projeto e origem, e o IntegridadeService só registra nova versão quando o
++        // conteúdo muda.
+         try {
+             DatabaseConnection.criarSchema();
+             long execucaoId = new RastreabilidadeDAO().salvarVertical(
+diff --git a/jgoose/src/main/java/br/unioeste/jgoose/view/MainView.java b/jgoose/src/main/java/br/unioeste/jgoose/view/MainView.java
+index 111bcd6..7f01508 100644
+--- a/jgoose/src/main/java/br/unioeste/jgoose/view/MainView.java
++++ b/jgoose/src/main/java/br/unioeste/jgoose/view/MainView.java
+@@ -1281,7 +1281,7 @@ public final class MainView extends javax.swing.JFrame {
+             JMenu fileMenu = ((EditorMenuBar) menubar).getFileMenu();
+             // alias label = l
+             String label = mxResources.get("useCaseMaker", null, "Generate Use Cases");
+-            JMenuItem menuItem = new JMenuItem(editor.bind(label, new ImportIStarGraph(E4JiStar)));
++            JMenuItem menuItem = new JMenuItem(editor.bind(label, new ImportIStarGraph(E4JiStar2)));
+             fileMenu.add(menuItem, 3);
+             fileMenu.add(new JPopupMenu.Separator(), 4);
+             String label1 = mxResources.get("traceabilityMaker", null, "Horizontal Traceability");
+@@ -1289,7 +1289,7 @@ public final class MainView extends javax.swing.JFrame {
+             fileMenu.add(menuItem1, 3);
+             fileMenu.add(new JPopupMenu.Separator(), 4);
+             String label2 = mxResources.get("traceabilityMaker", null, "Vertical Traceability");
+-            JMenuItem menuItem2 = new JMenuItem(editor.bind(label2, new VerticalTraceController(E4JiStar, E4JBPMN, E4JUseCases, useCasesViewIStar, useCasesViewBPMN, 2)));
++            JMenuItem menuItem2 = new JMenuItem(editor.bind(label2, new VerticalTraceController(E4JiStar2, E4JBPMN, E4JUseCases, useCasesViewIStar, useCasesViewBPMN, 2)));
+             fileMenu.add(menuItem2, 3);
+             fileMenu.add(new JPopupMenu.Separator(), 4);
+ 
+diff --git a/jgoose/src/main/java/br/unioeste/jgoose/view/UseCasesViewIStar.java b/jgoose/src/main/java/br/unioeste/jgoose/view/UseCasesViewIStar.java
+index a624caf..dfd2847 100644
+--- a/jgoose/src/main/java/br/unioeste/jgoose/view/UseCasesViewIStar.java
++++ b/jgoose/src/main/java/br/unioeste/jgoose/view/UseCasesViewIStar.java
+@@ -1224,7 +1224,7 @@ public final class UseCasesViewIStar extends javax.swing.JFrame {
+             JMenuItem menuItem1 = new JMenuItem(editor.bind(label1, (Action) new HorizontalControler(E4JiStar, E4JBPMN, E4JUseCases, this, useCasesViewBPMN, 3)));
+             fileMenu.add(menuItem1, 3);
+             String label2 = mxResources.get("traceabilityMaker", null, "Vertical Traceability");
+-            JMenuItem menuItem2 = new JMenuItem(editor.bind(label2, new VerticalTraceController(E4JiStar, E4JBPMN, E4JUseCases, this, useCasesViewBPMN, 1)));
++            JMenuItem menuItem2 = new JMenuItem(editor.bind(label2, new VerticalTraceController(E4JiStar, E4JBPMN, E4JUseCases, this, useCasesViewBPMN, 2)));
+             fileMenu.add(menuItem2, 3);
+         }
+         mxGraph graph = generateDiagram();

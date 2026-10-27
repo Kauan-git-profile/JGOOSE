@@ -77,5 +77,7 @@ public class IStarUtils {
     public static Element createGeneralization() {return create(new IStarElement("actorLink", "generalization", "generalization"));}
     public static Element createInclude() {return create(new IStarElement("ielementLink", "<< include >>", "include"));}
     public static Element createExtend() {return create(new IStarElement("ielementLink", "<< extend >>", "extend"));}
+    public static Element createSecondaryActorUseCase() {return create(new IStarElement("actorLink", "Secondary Actor", "secondary_actor")); }
+    public static Element createSystemBoundary() {return create(new IStarElement("ielementBoundary", "Sistema", "boundary")); }
     
 }

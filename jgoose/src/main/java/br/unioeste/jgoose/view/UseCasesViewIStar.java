@@ -1224,7 +1224,7 @@ public final class UseCasesViewIStar extends javax.swing.JFrame {
             JMenuItem menuItem1 = new JMenuItem(editor.bind(label1, (Action) new HorizontalControler(E4JiStar, E4JBPMN, E4JUseCases, this, useCasesViewBPMN, 3)));
             fileMenu.add(menuItem1, 3);
             String label2 = mxResources.get("traceabilityMaker", null, "Vertical Traceability");
-            JMenuItem menuItem2 = new JMenuItem(editor.bind(label2, new VerticalTraceController(E4JiStar, E4JBPMN, E4JUseCases, this, useCasesViewBPMN, 1)));
+            JMenuItem menuItem2 = new JMenuItem(editor.bind(label2, new VerticalTraceController(E4JiStar, E4JBPMN, E4JUseCases, this, useCasesViewBPMN, 2)));
             fileMenu.add(menuItem2, 3);
         }
         mxGraph graph = generateDiagram();

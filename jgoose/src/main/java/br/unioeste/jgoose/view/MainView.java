@@ -1281,7 +1281,7 @@ public final class MainView extends javax.swing.JFrame {
             JMenu fileMenu = ((EditorMenuBar) menubar).getFileMenu();
             // alias label = l
             String label = mxResources.get("useCaseMaker", null, "Generate Use Cases");
-            JMenuItem menuItem = new JMenuItem(editor.bind(label, new ImportIStarGraph(E4JiStar)));
+            JMenuItem menuItem = new JMenuItem(editor.bind(label, new ImportIStarGraph(E4JiStar2)));
             fileMenu.add(menuItem, 3);
             fileMenu.add(new JPopupMenu.Separator(), 4);
             String label1 = mxResources.get("traceabilityMaker", null, "Horizontal Traceability");
@@ -1289,7 +1289,7 @@ public final class MainView extends javax.swing.JFrame {
             fileMenu.add(menuItem1, 3);
             fileMenu.add(new JPopupMenu.Separator(), 4);
             String label2 = mxResources.get("traceabilityMaker", null, "Vertical Traceability");
-            JMenuItem menuItem2 = new JMenuItem(editor.bind(label2, new VerticalTraceController(E4JiStar, E4JBPMN, E4JUseCases, useCasesViewIStar, useCasesViewBPMN, 2)));
+            JMenuItem menuItem2 = new JMenuItem(editor.bind(label2, new VerticalTraceController(E4JiStar2, E4JBPMN, E4JUseCases, useCasesViewIStar, useCasesViewBPMN, 2)));
             fileMenu.add(menuItem2, 3);
             fileMenu.add(new JPopupMenu.Separator(), 4);
 

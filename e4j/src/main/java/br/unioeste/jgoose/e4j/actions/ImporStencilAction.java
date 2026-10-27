@@ -117,6 +117,11 @@ public class ImporStencilAction extends AbstractAction {
                     w = 120;
                     h = 60;
                     break;
+                case "secondary actor":
+                    value = IStarUtils.createSecondaryActorUseCase();
+                    style += ";";
+                    mxGraphics2DCanvas.putShape(name, new ActorShape(nodeXml));
+                    break;
                 default:
                     break;
             }

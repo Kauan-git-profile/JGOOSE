@@ -1,0 +1,46 @@
+{
+  "db": "/home/kauan/Downloads/JGOOSE-vertical/JGOOSE/jgoose/jgoose_rastreabilidade.db",
+  "execucao_id": 13,
+  "rpc_url": "http://127.0.0.1:8545",
+  "contract_address": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+  "onchain_versions": [
+    {
+      "version": 1,
+      "hash": "e0521cb0c9bb1c224b6eba0ceae5c8601023594d9df405e03becb6a484cd2d28",
+      "timestamp": 1792734227,
+      "responsible": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
+    }
+  ],
+  "baseline_status": "DIVERGENTE",
+  "baseline_hash": "b0840e06ea70d6f433814cacbdd673b1becfdbd5c636746aa3223de47f7f2a9a",
+  "alteracoes_detectadas": 3,
+  "alteracoes_executadas": 3,
+  "taxa_deteccao_percentual": 100.0,
+  "baseline_integro": false,
+  "benchmark_hash_local": {
+    "n": 30,
+    "mean_ms": 0.17977636689465726,
+    "median_ms": 0.1773650001268834,
+    "stdev_ms": 0.011638451504247638,
+    "min_ms": 0.16841900105646346,
+    "max_ms": 0.23078300000634044
+  },
+  "benchmark_auditoria_hash_rpc": {
+    "n": 30,
+    "mean_ms": 8.132649600035316,
+    "median_ms": 7.983115499882842,
+    "stdev_ms": 0.42838005804340823,
+    "min_ms": 7.505600000513368,
+    "max_ms": 9.376009000334307
+  },
+  "gas_estimado_registrar_hash": {
+    "indisponivel": "(\"The function 'registrarHash' was not found in this \", \"contract's abi.\")"
+  },
+  "medicao_transacao_escrita_opcional": null,
+  "limites": [
+    "O teste compara o hash canônico com os hashes consultados no contrato real.",
+    "Por padrão, o script não envia transações; --measure-write envia uma transação e adiciona uma versão ao contrato.",
+    "O tempo de auditoria inclui o hash Python e as consultas RPC, não o custo total da interface Java/Swing.",
+    "A conclusão se limita aos campos cobertos pelo HashService e aos cenários testados."
+  ]
+}

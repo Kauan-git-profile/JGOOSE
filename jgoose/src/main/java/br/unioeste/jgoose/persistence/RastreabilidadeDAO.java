@@ -8,12 +8,20 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class RastreabilidadeDAO {
 
     public static final String HORIZONTAL = "HORIZONTAL";
     public static final String VERTICAL = "VERTICAL";
+
+    /**
+     * Nome usado quando o diagrama ainda não foi salvo em arquivo. Ele NÃO identifica um projeto:
+     * diagramas diferentes sem arquivo compartilham esse nome, então nunca são sobrescritos.
+     */
+    public static final String SEM_TITULO = "Sem título";
 
     /** Mantido por compatibilidade: equivale a {@link #salvarHorizontal}. */
     public long salvar(TokensTraceability tokens, String origem, String nomeProjeto) {
@@ -48,11 +56,43 @@ public class RastreabilidadeDAO {
             conn.setAutoCommit(false);
             try {
                 long projetoId = obterOuCriarProjeto(conn, nomeProjeto);
-                long execucaoId = criarExecucao(conn, projetoId, origem, tipo);
 
-                // Escopo do TCC: Stakeholder x Requisitos, Requisitos x Stakeholder e Requisitos x Requisitos
-                salvarLista(conn, execucaoId, tokens.getStakeholders(), tipo, modeloFonte, modeloAlvo);
-                salvarLista(conn, execucaoId, tokens.getRequisitos(), tipo, modeloFonte, modeloAlvo);
+                // Mesmo projeto (mesmo nome) e mesma origem = a MESMA execução: ela passa a refletir o
+                // estado atual do diagrama (uma nova versão), em vez de acumular execuções duplicadas.
+                // O histórico das versões fica na blockchain (o contrato guarda todas as versões).
+                long execucaoId = SEM_TITULO.equals(nomeProjeto) ? -1 : buscarExecucao(conn, projetoId, origem);
+                boolean reaproveitada = execucaoId > 0;
+                String hashAnterior = null;
+                Map<String, String> abreviacoes = null;
+                if (reaproveitada) {
+                    hashAnterior = lerHash(conn, execucaoId);
+                    abreviacoes = lerAbreviacoes(conn, execucaoId);
+                    limparDadosDaExecucao(conn, execucaoId);
+                    atualizarTipoEFormato(conn, execucaoId, tipo);
+                } else {
+                    execucaoId = criarExecucao(conn, projetoId, origem, tipo);
+                }
+
+                // Todas as listas de TokensTraceability. A horizontal usa principalmente stakeholders e
+                // requisitos; a vertical (BPMN/i* -> casos de uso) também usa ator do sistema, informação
+                // organizacional, informação externa e objetivo do sistema (ver TraceIStarVertical /
+                // TraceBPMNVertical). Sem isso, a maior parte do que a vertical gera não era persistida
+                // nem, portanto, auditável.
+                salvarLista(conn, execucaoId, tokens.getStakeholders(), tipo, modeloFonte, modeloAlvo, abreviacoes);
+                salvarLista(conn, execucaoId, tokens.getRequisitos(), tipo, modeloFonte, modeloAlvo, abreviacoes);
+                salvarLista(conn, execucaoId, tokens.getAtorSistema(), tipo, modeloFonte, modeloAlvo, abreviacoes);
+                salvarLista(conn, execucaoId, tokens.getInformacaoOrg(), tipo, modeloFonte, modeloAlvo, abreviacoes);
+                salvarLista(conn, execucaoId, tokens.getInformcaoExterna(), tipo, modeloFonte, modeloAlvo, abreviacoes);
+                salvarLista(conn, execucaoId, tokens.getObjetivoSistema(), tipo, modeloFonte, modeloAlvo, abreviacoes);
+
+                if (reaproveitada) {
+                    // Compara o conteúdo novo com o anterior (mesma data_hora). Se mudou, é uma nova versão:
+                    // atualiza a data e zera hash/txHash, que serão recalculados e registrados em seguida.
+                    String hashNovo = new HashService().calcularHashExecucao(conn, execucaoId);
+                    if (hashAnterior == null || !hashNovo.equals(hashAnterior)) {
+                        marcarComoNovaVersao(conn, execucaoId);
+                    }
+                }
 
                 conn.commit();
                 return execucaoId;
@@ -82,6 +122,95 @@ public class RastreabilidadeDAO {
         }
     }
 
+    /** Execução mais recente do mesmo projeto e da mesma origem, ou -1 se não existe. */
+    private long buscarExecucao(Connection conn, long projetoId, String origem) throws SQLException {
+        try (PreparedStatement ps = conn.prepareStatement(
+                "SELECT id FROM execucao_mapeamento WHERE projeto_id = ? AND origem = ? ORDER BY id DESC LIMIT 1")) {
+            ps.setLong(1, projetoId);
+            ps.setString(2, origem);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? rs.getLong(1) : -1;
+            }
+        }
+    }
+
+    private String lerHash(Connection conn, long execucaoId) throws SQLException {
+        try (PreparedStatement ps = conn.prepareStatement("SELECT hash_sha256 FROM execucao_mapeamento WHERE id = ?")) {
+            ps.setLong(1, execucaoId);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? rs.getString(1) : null;
+            }
+        }
+    }
+
+    /** Abreviações já gravadas para a execução, indexadas por classe, modelo e código do elemento. */
+    private Map<String, String> lerAbreviacoes(Connection conn, long execucaoId) throws SQLException {
+        Map<String, String> mapa = new HashMap<String, String>();
+        try (PreparedStatement ps = conn.prepareStatement(
+                "SELECT classe, modelo, code, abreviacao FROM elemento_rastreado WHERE execucao_id = ?")) {
+            ps.setLong(1, execucaoId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    mapa.put(chaveAbreviacao(rs.getString(1), rs.getString(2), rs.getString(3)), rs.getString(4));
+                }
+            }
+        }
+        return mapa;
+    }
+
+    private static String chaveAbreviacao(String classe, String modelo, String code) {
+        return classe + "|" + modelo + "|" + code;
+    }
+
+    /**
+     * As abreviações ([STK 0], [RF 3]...) vêm de contadores estáticos das classes Traced*, que continuam
+     * crescendo a cada geração na mesma sessão. Como entram no hash, gerar de novo um diagrama IDÊNTICO
+     * produziria um hash diferente. Ao atualizar uma execução, o mesmo elemento (classe, modelo e código)
+     * mantém a abreviação já gravada; assim só uma alteração real do conteúdo cria uma nova versão.
+     */
+    private static String abreviacaoParaGravar(TracedElement el, String modelo, Map<String, String> anteriores) {
+        if (anteriores != null) {
+            String guardada = anteriores.get(chaveAbreviacao(el.getClasse(), modelo, el.getCode()));
+            if (guardada != null) {
+                return guardada;
+            }
+        }
+        return el.getAbreviacao();
+    }
+
+    /** Apaga os elementos e vínculos da execução (o estado anterior), para gravar o estado atual. */
+    private void limparDadosDaExecucao(Connection conn, long execucaoId) throws SQLException {
+        try (PreparedStatement ps = conn.prepareStatement(
+                "DELETE FROM relacionamento_rastreabilidade WHERE elemento_origem_id IN "
+              + "(SELECT id FROM elemento_rastreado WHERE execucao_id = ?)")) {
+            ps.setLong(1, execucaoId);
+            ps.executeUpdate();
+        }
+        try (PreparedStatement ps = conn.prepareStatement("DELETE FROM elemento_rastreado WHERE execucao_id = ?")) {
+            ps.setLong(1, execucaoId);
+            ps.executeUpdate();
+        }
+    }
+
+    /** Execuções criadas por versões antigas (sem tipo/formato) passam a usar o formato atual do hash. */
+    private void atualizarTipoEFormato(Connection conn, long execucaoId, String tipo) throws SQLException {
+        try (PreparedStatement ps = conn.prepareStatement(
+                "UPDATE execucao_mapeamento SET tipo_rastreabilidade = ?, formato_hash = ? WHERE id = ?")) {
+            ps.setString(1, tipo);
+            ps.setString(2, HashService.FORMATO_ATUAL);
+            ps.setLong(3, execucaoId);
+            ps.executeUpdate();
+        }
+    }
+
+    private void marcarComoNovaVersao(Connection conn, long execucaoId) throws SQLException {
+        try (PreparedStatement ps = conn.prepareStatement(
+                "UPDATE execucao_mapeamento SET data_hora = datetime('now'), hash_sha256 = NULL, tx_hash = NULL WHERE id = ?")) {
+            ps.setLong(1, execucaoId);
+            ps.executeUpdate();
+        }
+    }
+
     private long criarExecucao(Connection conn, long projetoId, String origem, String tipo) throws SQLException {
         String sql = "INSERT INTO execucao_mapeamento(projeto_id, origem, tipo_rastreabilidade, formato_hash) "
                    + "VALUES (?,?,?,?)";
@@ -99,7 +228,11 @@ public class RastreabilidadeDAO {
     }
 
     private void salvarLista(Connection conn, long execucaoId, List<TracedElement> elementos,
-                             String tipo, String modeloFonte, String modeloAlvo) throws SQLException {
+                             String tipo, String modeloFonte, String modeloAlvo,
+                             Map<String, String> abreviacoes) throws SQLException {
+        if (elementos == null || elementos.isEmpty()) {
+            return;
+        }
         if (elementos == null) {
             return;
         }
@@ -121,7 +254,7 @@ public class RastreabilidadeDAO {
                 psElem.setString(3, el.getLabel());
                 psElem.setString(4, el.getClasse());
                 psElem.setString(5, el.getFase());
-                psElem.setString(6, el.getAbreviacao());
+                psElem.setString(6, abreviacaoParaGravar(el, modelo, abreviacoes));
                 psElem.setString(7, modelo);
                 psElem.executeUpdate();
 

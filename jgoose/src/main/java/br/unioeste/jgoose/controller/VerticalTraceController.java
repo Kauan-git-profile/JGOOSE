@@ -45,8 +45,22 @@ public class VerticalTraceController extends AbstractAction {
     private static UseCasesViewBPMN useCasesViewBPMN = null;
     private static UseCasesViewIStar useCasesViewIStar = null;
 
+    // Contexto deste item de menu. Os campos estáticos abaixo são compartilhados por TODAS as instâncias e
+    // cada construtor os sobrescreve; sem guardar o contexto da instância, o último menu montado (por
+    // exemplo, o do diagrama de casos de uso, de tipo BPMN) decidiria o tipo da rastreabilidade.
+    private final int tipoDoMenu;
+    private final EditorJFrame menuE4JiStar, menuE4JBPMN, menuE4JUseCases;
+    private final UseCasesViewIStar menuViewIStar;
+    private final UseCasesViewBPMN menuViewBPMN;
+
     public VerticalTraceController(EditorJFrame E4JiStar, EditorJFrame E4JBPMN, EditorJFrame E4JUseCases,
             UseCasesViewIStar useCasesViewIStar, UseCasesViewBPMN useCasesViewBPMN, int i) {
+        this.tipoDoMenu = i;
+        this.menuE4JiStar = E4JiStar;
+        this.menuE4JBPMN = E4JBPMN;
+        this.menuE4JUseCases = E4JUseCases;
+        this.menuViewIStar = useCasesViewIStar;
+        this.menuViewBPMN = useCasesViewBPMN;
 
         this.E4JBPMN = E4JBPMN;
         this.E4JiStar = E4JiStar;
@@ -254,22 +268,17 @@ public class VerticalTraceController extends AbstractAction {
         return tokensTraceability;
     }
 
-    /**
-     * True somente enquanto o usuário aciona a GERAÇÃO da matriz vertical (menu "Vertical Traceability").
-     * Os botões de navegação que apenas reabrem a tela chamam openVerticalTraceabilityView() diretamente,
-     * o que regenera a matriz; nesse caso nada deve ser gravado, senão cada clique criaria uma nova
-     * execução no banco e uma nova transação na blockchain.
-     */
-    private static boolean gravarNestaGeracao = false;
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        gravarNestaGeracao = true;
-        try {
-            openVerticalTraceabilityView();
-        } finally {
-            gravarNestaGeracao = false;
-        }
+        // restaura o contexto do menu que foi clicado (ver comentário dos campos acima)
+        type = tipoDoMenu;
+        if (menuE4JiStar != null) E4JiStar = menuE4JiStar;
+        if (menuE4JBPMN != null) E4JBPMN = menuE4JBPMN;
+        if (menuE4JUseCases != null) E4JUseCases = menuE4JUseCases;
+        if (menuViewIStar != null) useCasesViewIStar = menuViewIStar;
+        if (menuViewBPMN != null) useCasesViewBPMN = menuViewBPMN;
+        openVerticalTraceabilityView();
     }
 
     public static void openVerticalTraceabilityView() {
@@ -334,9 +343,9 @@ public class VerticalTraceController extends AbstractAction {
      */
     private static void persistirVertical(TokensTraceability tokens, String origem,
                                           EditorJFrame editorFonte, String modeloFonte) {
-        if (!gravarNestaGeracao) {
-            return;
-        }
+        // Grava em toda geração (menu ou botões laterais). Não há duplicação: o DAO reaproveita a
+        // execução do mesmo projeto e origem, e o IntegridadeService só registra nova versão quando o
+        // conteúdo muda.
         try {
             DatabaseConnection.criarSchema();
             long execucaoId = new RastreabilidadeDAO().salvarVertical(

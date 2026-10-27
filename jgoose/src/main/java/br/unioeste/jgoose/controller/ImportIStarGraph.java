@@ -144,7 +144,9 @@ public class ImportIStarGraph extends AbstractAction {
             if(Controller.getFlagPreferences()){
                 mainView.setE4JiStar(E4JiStar);
                 mainView.iStarUCView();
-                this.E4JiStar.setVisible(false);
+                if (this.E4JiStar != null) {
+                    this.E4JiStar.setVisible(false);
+                }
             }
         } else {
             JOptionPane.showMessageDialog(null, "For Map Use Cases you need select an Actor as a System", "ERROR!", JOptionPane.ERROR_MESSAGE);

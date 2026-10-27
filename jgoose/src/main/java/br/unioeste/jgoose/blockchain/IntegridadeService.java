@@ -36,9 +36,19 @@ public class IntegridadeService {
         BlockchainService chain = null;
         try {
             chain = new BlockchainService();
+
+            // Se a versão mais recente registrada já é igual ao hash atual, não há nada novo a registrar
+            // (evita versões repetidas quando o diagrama é gerado de novo sem ter sido alterado).
+            long versoes = chain.quantidadeRegistros(execucaoId);
+            if (versoes > 0 && chain.obterRegistro(execucaoId, versoes - 1).hash.equalsIgnoreCase(hash)) {
+                return "[Integridade] Execução " + execucaoId + ": sem alterações em relação à versão " + versoes
+                        + " já registrada na blockchain; nada a registrar.";
+            }
+
             String tx = chain.registrarHash(execucaoId, hash);
             dao.salvarTxHash(execucaoId, tx);
-            return "[Integridade] Execução " + execucaoId + ": hash " + hash + " registrado on-chain. txHash: " + tx;
+            return "[Integridade] Execução " + execucaoId + ": hash " + hash + " registrado on-chain"
+                    + (versoes > 0 ? " (nova versão " + (versoes + 1) + ")" : "") + ". txHash: " + tx;
         } catch (Exception e) {
             return "[Integridade] Execução " + execucaoId + ": hash " + hash
                     + " salvo no banco, mas o envio on-chain FALHOU: " + e.getMessage();

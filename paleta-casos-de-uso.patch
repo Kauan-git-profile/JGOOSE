@@ -1,0 +1,285 @@
+diff --git a/e4j/resources/shapes/use cases diagram/secondary.shape b/e4j/resources/shapes/use cases diagram/secondary.shape
+new file mode 100644
+index 0000000..d61d2a7
+--- /dev/null
++++ b/e4j/resources/shapes/use cases diagram/secondary.shape	
+@@ -0,0 +1,82 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<shape xmlns="http://www.daa.com.au/~james/dia-shape-ns" xmlns:svg="http://www.w3.org/2000/svg">
++  <name>Secondary Actor</name>
++  <icon>secondary_actor.png</icon>
++  <connections>
++    <point x="-3.22777" y="-6.36842"/>
++    <point x="-3.22777" y="-6.96842"/>
++    <point x="-3.52777" y="-6.66842"/>
++    <point x="-2.92777" y="-6.66842"/>
++    <point x="-4.42777" y="-6.06842"/>
++    <point x="-2.02777" y="-6.06842"/>
++    <point x="-3.22777" y="-6.06842"/>
++    <point x="-3.22777" y="-6.36842"/>
++    <point x="-3.22777" y="-4.86842"/>
++    <point x="-3.22777" y="-5.61842"/>
++    <point x="-3.22777" y="-4.86842"/>
++    <point x="-4.42777" y="-3.56842"/>
++    <point x="-3.82777" y="-4.21842"/>
++    <point x="-3.22777" y="-4.86842"/>
++    <point x="-2.02777" y="-3.56842"/>
++    <point x="-2.62777" y="-4.21842"/>
++  </connections>
++  <aspectratio type="fixed"/>
++  <svg:svg>
++    <svg:ellipse style="fill: #ffffff" cx="-3.22777" cy="-6.66842" rx="0.3" ry="0.3"/>
++    <svg:ellipse style="fill: #ffffff; fill-opacity:0; stroke-width: 0.1; stroke: #000000" cx="-3.22777" cy="-6.66842" rx="0.3" ry="0.3"/>
++    <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-4.42777" y1="-6.06842" x2="-2.02777" y2="-6.06842"/>
++    <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-3.22777" y1="-6.36842" x2="-3.22777" y2="-4.86842"/>
++    <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-3.22777" y1="-4.86842" x2="-4.42777" y2="-3.56842"/>
++    <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-3.22777" y1="-4.86842" x2="-2.02777" y2="-3.56842"/>
++    <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-4.51" y1="-2.76" x2="-4.69" y2="-2.9"/>
++    <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-4.69" y1="-2.9" x2="-4.51" y2="-3.08"/>
++
++    <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-4.44" y1="-2.8" x2="-4.57" y2="-2.91"/>
++    <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-4.57" y1="-2.91" x2="-4.46" y2="-3.02"/>
++
++    <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-4.13" y1="-3.09" x2="-4.31" y2="-3.01"/>
++    <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-4.31" y1="-3.01" x2="-4.07" y2="-2.83"/>
++    <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-4.07" y1="-2.83" x2="-4.31" y2="-2.79"/>
++
++    <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-3.78" y1="-3.09" x2="-4.0" y2="-3.08"/>
++    <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-4.0" y1="-3.08" x2="-4" y2="-2.96"/>
++    <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-4" y1="-2.96" x2="-3.89" y2="-2.96"/>
++    <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-4" y1="-2.96" x2="-4" y2="-2.8"/>
++    <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-4" y1="-2.8" x2="-3.78" y2="-2.79"/>
++
++    <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-3.47" y1="-3.09" x2="-3.68" y2="-3.07"/>
++    <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-3.68" y1="-3.07" x2="-3.67" y2="-2.82"/>
++    <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-3.67" y1="-2.82" x2="-3.48" y2="-2.8"/>
++
++   <svg:ellipse style="fill: #ffffff; fill-opacity:0; stroke-width: 0.1; stroke: #000000" cx="-3.31" cy="-2.94" rx="0.14" ry="0.14"/>
++
++   <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-3.14" y1="-2.79" x2="-3.14" y2="-3.09"/>
++   <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-3.14" y1="-3.09" x2="-2.98" y2="-2.8"/>
++   <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-2.98" y1="-2.8" x2="-2.99" y2="-3.09"/>
++
++   <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-2.92" y1="-3.09" x2="-2.92" y2="-2.8"/>
++   <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-2.92" y1="-2.79" x2="-2.8" y2="-2.85"/>
++   <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-2.8" y1="-2.85" x2="-2.78" y2="-3.02"/>
++   <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-2.78" y1="-3.02" x2="-2.92" y2="-3.09"/>
++
++   <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-2.75" y1="-2.8" x2="-2.67" y2="-3.09"/>
++   <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-2.67" y1="-3.09" x2="-2.58" y2="-2.8"/>
++   <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-2.72" y1="-2.92" x2="-2.62" y2="-2.92"/>
++
++   <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-2.54" y1="-2.8" x2="-2.55" y2="-3.09"/>
++   <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-2.55" y1="-3.09" x2="-2.4" y2="-3.02"/>
++   <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-2.4" y1="-3.02" x2="-2.55" y2="-2.92"/>
++   <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-2.55" y1="-2.92" x2="-2.4" y2="-2.8"/>
++
++   <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-2.34" y1="-3.09" x2="-2.2" y2="-2.94"/>
++   <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-2.15" y1="-3.06" x2="-2.27" y2="-2.8"/>
++
++   <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-2" y1="-3.09" x2="-1.78" y2="-2.94"/>
++   <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-1.78" y1="-2.94" x2="-2" y2="-2.8"/>
++
++   <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-2" y1="-3.02" x2="-1.89" y2="-2.95"/>
++   <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-1.89" y1="-2.95" x2="-2.01" y2="-2.88"/>
++   
++   <svg:text style="fill: #000000; text-anchor:middle; font-family: sans; font-style: normal; font-weight: normal" x="-3.22777" y="-2.32842" font-size="0.8" textLength="1.185">Secondary Actor</svg:text>
++  </svg:svg>
++</shape>
+\ No newline at end of file
+diff --git a/e4j/resources/shapes/use cases diagram/secondary_actor.png b/e4j/resources/shapes/use cases diagram/secondary_actor.png
+new file mode 100644
+index 0000000000000000000000000000000000000000..3539daf21867ff82ba22024e3d1ce9f88db9b539
+GIT binary patch
+literal 653
+zcmV;80&@L{P)<h;3K|Lk000e1NJLTq000jF000vR1^@s6Pr_HK00009a7bBm000ie
+z000ie0hKEb8vp<SHfcjcP*7-ZbZ>KLZ*U+<Lqi~Na&Km7Y-Iodc-pOwu}Z^G6hP05
+zqT*011aWY9lPD;*>R`sCEkzKl)gj5&q@hY_5?)@_euSf22N!q0z{yc?Q2YY_Kym8e
+z5Fvwu2%hQO!{u_psMvL<VU%GIYt?Q#()D~f`@{@W0MH4u)NZv70OBN$_`&BZ0^oVm
+zt~(9>#(bD64NQRTZj^-}DnS22ry9f<FoS-oLEHhRI%(HHJOHI$?k_+o$o&l{DcAEs
+zd;n(8^?Weq05iya1u%7VsR3$9I#Or7Q!T5OWl6i61d%)*WjY#Uaz73el_sjAqb`vD
+z2f$*!*ls#<t!i0&>-;mW=gZvQj}U-ZdMsK&I8^7~DvX`q=i<hA84hn@dQ!CAE4bN!
+zh3lfNR-wEF_v0_X#!vm|T2EpC001CkNK#Dz0D2_=0Dyx40Qvs_0D$NK08$750ToyP
+z06Lcd02go9S|5-A007ZRL_t(|+SF9B4Z<)GJUgT#$^tYVfSxur1uegUH^>N4MqmRL
+za82tn5(Bu%21!bkPz4#}$3QB+dg<@(|9!T_G)?$5Bv&A!iioOrWD)92M3uF62LO4V
+zcTLkAJ|+V|mStA}==*-lbzX6WVHno2ogd`7u8+o;ecQGh07%pHCWIK3QkNN{wLX<)
+zd43w(-!T^c8L&Ig9i4N<*H$g^`47pyJ$@b~hrpbG<Ur23!nY|TAUR?ve-)7PD++;Q
+n0ulg{BpGA3DO3|nev<nDN+4ngQ&|kr00000NkvXXu0mjfLx2m*
+
+literal 0
+HcmV?d00001
+
+diff --git a/e4j/src/main/java/br/unioeste/jgoose/e4j/CustomGraph.java b/e4j/src/main/java/br/unioeste/jgoose/e4j/CustomGraph.java
+index d27b1d8..15b9837 100644
+--- a/e4j/src/main/java/br/unioeste/jgoose/e4j/CustomGraph.java
++++ b/e4j/src/main/java/br/unioeste/jgoose/e4j/CustomGraph.java
+@@ -209,7 +209,7 @@ public class CustomGraph extends mxGraph {
+                         }
+                         break;
+                     case "association":
+-                        if (!(sourceType.matches("actor_usecase") && targetType.matches("usecase"))) {
++                        if (!((sourceType.matches("actor_usecase") || sourceType.matches("secondary_actor")) && targetType.matches("usecase"))) {
+                             String error = "Edge '"
+                                     + "" + edgeType
+                                     + "' between "
+@@ -395,7 +395,8 @@ public class CustomGraph extends mxGraph {
+                 String label = newValue.toString();
+                 value.setAttribute("label", label);
+                 //se for um grupo, quando ele estiver Collapse e for editado, tbm editar o shape atras...
+-                if (cell.getChildCount() > 0) {
++                //(a fronteira do sistema "boundary" tem como filhos os casos de uso: neles o rótulo não deve ser propagado)
++                if (cell.getChildCount() > 0 && !"boundary".equals(cell.getAttribute("type"))) {
+                     super.cellLabelChanged(cell.getChildAt(0), newValue, autoSize);
+                 }
+                 newValue = v;
+diff --git a/e4j/src/main/java/br/unioeste/jgoose/e4j/actions/ImporStencilAction.java b/e4j/src/main/java/br/unioeste/jgoose/e4j/actions/ImporStencilAction.java
+index 863b79b..cb5a233 100644
+--- a/e4j/src/main/java/br/unioeste/jgoose/e4j/actions/ImporStencilAction.java
++++ b/e4j/src/main/java/br/unioeste/jgoose/e4j/actions/ImporStencilAction.java
+@@ -117,6 +117,11 @@ public class ImporStencilAction extends AbstractAction {
+                     w = 120;
+                     h = 60;
+                     break;
++                case "secondary actor":
++                    value = IStarUtils.createSecondaryActorUseCase();
++                    style += ";";
++                    mxGraphics2DCanvas.putShape(name, new ActorShape(nodeXml));
++                    break;
+                 default:
+                     break;
+             }
+diff --git a/e4j/src/main/java/br/unioeste/jgoose/e4j/swing/palettes/UseCasesDiagramPalette.java b/e4j/src/main/java/br/unioeste/jgoose/e4j/swing/palettes/UseCasesDiagramPalette.java
+index c7ae60c..6b6d932 100644
+--- a/e4j/src/main/java/br/unioeste/jgoose/e4j/swing/palettes/UseCasesDiagramPalette.java
++++ b/e4j/src/main/java/br/unioeste/jgoose/e4j/swing/palettes/UseCasesDiagramPalette.java
+@@ -49,5 +49,7 @@
+ /* 49 */     addEdgeTemplate("Include", new ImageIcon("resources/shapes/use cases diagram/include.png"), "straight;dashed=1;endArrow=open;endSize=14;shape=curvedEdge;edgeStyle=curvedEdgeStyle", 80, 80, element);
+ /* 50 */     element = IStarUtils.createExtend();
+ /* 51 */     addEdgeTemplate("Extend", new ImageIcon("resources/shapes/use cases diagram/extend.png"), "straight;dashed=1;endArrow=open;endSize=14;shape=curvedEdge;edgeStyle=curvedEdgeStyle", 80, 80, element);
++/*    */     element = IStarUtils.createSystemBoundary();
++/*    */     addSwimlane("System Boundary", new ImageIcon("resources/shapes/bpmn/swimlane/pool.png"), "shape=swimlane;connectable=0;horizontal=true;", 480, 480, element);
+ /*    */   }
+ /*    */ }
+diff --git a/e4j/src/main/java/br/unioeste/jgoose/util/IStarUtils.java b/e4j/src/main/java/br/unioeste/jgoose/util/IStarUtils.java
+index 8fdfbcc..7d84e60 100644
+--- a/e4j/src/main/java/br/unioeste/jgoose/util/IStarUtils.java
++++ b/e4j/src/main/java/br/unioeste/jgoose/util/IStarUtils.java
+@@ -77,5 +77,7 @@ public class IStarUtils {
+     public static Element createGeneralization() {return create(new IStarElement("actorLink", "generalization", "generalization"));}
+     public static Element createInclude() {return create(new IStarElement("ielementLink", "<< include >>", "include"));}
+     public static Element createExtend() {return create(new IStarElement("ielementLink", "<< extend >>", "extend"));}
++    public static Element createSecondaryActorUseCase() {return create(new IStarElement("actorLink", "Secondary Actor", "secondary_actor")); }
++    public static Element createSystemBoundary() {return create(new IStarElement("ielementBoundary", "Sistema", "boundary")); }
+     
+ }
+diff --git a/jgoose/resources/shapes/use cases diagram/secondary.shape b/jgoose/resources/shapes/use cases diagram/secondary.shape
+new file mode 100644
+index 0000000..d61d2a7
+--- /dev/null
++++ b/jgoose/resources/shapes/use cases diagram/secondary.shape	
+@@ -0,0 +1,82 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<shape xmlns="http://www.daa.com.au/~james/dia-shape-ns" xmlns:svg="http://www.w3.org/2000/svg">
++  <name>Secondary Actor</name>
++  <icon>secondary_actor.png</icon>
++  <connections>
++    <point x="-3.22777" y="-6.36842"/>
++    <point x="-3.22777" y="-6.96842"/>
++    <point x="-3.52777" y="-6.66842"/>
++    <point x="-2.92777" y="-6.66842"/>
++    <point x="-4.42777" y="-6.06842"/>
++    <point x="-2.02777" y="-6.06842"/>
++    <point x="-3.22777" y="-6.06842"/>
++    <point x="-3.22777" y="-6.36842"/>
++    <point x="-3.22777" y="-4.86842"/>
++    <point x="-3.22777" y="-5.61842"/>
++    <point x="-3.22777" y="-4.86842"/>
++    <point x="-4.42777" y="-3.56842"/>
++    <point x="-3.82777" y="-4.21842"/>
++    <point x="-3.22777" y="-4.86842"/>
++    <point x="-2.02777" y="-3.56842"/>
++    <point x="-2.62777" y="-4.21842"/>
++  </connections>
++  <aspectratio type="fixed"/>
++  <svg:svg>
++    <svg:ellipse style="fill: #ffffff" cx="-3.22777" cy="-6.66842" rx="0.3" ry="0.3"/>
++    <svg:ellipse style="fill: #ffffff; fill-opacity:0; stroke-width: 0.1; stroke: #000000" cx="-3.22777" cy="-6.66842" rx="0.3" ry="0.3"/>
++    <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-4.42777" y1="-6.06842" x2="-2.02777" y2="-6.06842"/>
++    <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-3.22777" y1="-6.36842" x2="-3.22777" y2="-4.86842"/>
++    <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-3.22777" y1="-4.86842" x2="-4.42777" y2="-3.56842"/>
++    <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-3.22777" y1="-4.86842" x2="-2.02777" y2="-3.56842"/>
++    <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-4.51" y1="-2.76" x2="-4.69" y2="-2.9"/>
++    <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-4.69" y1="-2.9" x2="-4.51" y2="-3.08"/>
++
++    <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-4.44" y1="-2.8" x2="-4.57" y2="-2.91"/>
++    <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-4.57" y1="-2.91" x2="-4.46" y2="-3.02"/>
++
++    <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-4.13" y1="-3.09" x2="-4.31" y2="-3.01"/>
++    <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-4.31" y1="-3.01" x2="-4.07" y2="-2.83"/>
++    <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-4.07" y1="-2.83" x2="-4.31" y2="-2.79"/>
++
++    <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-3.78" y1="-3.09" x2="-4.0" y2="-3.08"/>
++    <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-4.0" y1="-3.08" x2="-4" y2="-2.96"/>
++    <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-4" y1="-2.96" x2="-3.89" y2="-2.96"/>
++    <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-4" y1="-2.96" x2="-4" y2="-2.8"/>
++    <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-4" y1="-2.8" x2="-3.78" y2="-2.79"/>
++
++    <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-3.47" y1="-3.09" x2="-3.68" y2="-3.07"/>
++    <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-3.68" y1="-3.07" x2="-3.67" y2="-2.82"/>
++    <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-3.67" y1="-2.82" x2="-3.48" y2="-2.8"/>
++
++   <svg:ellipse style="fill: #ffffff; fill-opacity:0; stroke-width: 0.1; stroke: #000000" cx="-3.31" cy="-2.94" rx="0.14" ry="0.14"/>
++
++   <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-3.14" y1="-2.79" x2="-3.14" y2="-3.09"/>
++   <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-3.14" y1="-3.09" x2="-2.98" y2="-2.8"/>
++   <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-2.98" y1="-2.8" x2="-2.99" y2="-3.09"/>
++
++   <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-2.92" y1="-3.09" x2="-2.92" y2="-2.8"/>
++   <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-2.92" y1="-2.79" x2="-2.8" y2="-2.85"/>
++   <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-2.8" y1="-2.85" x2="-2.78" y2="-3.02"/>
++   <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-2.78" y1="-3.02" x2="-2.92" y2="-3.09"/>
++
++   <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-2.75" y1="-2.8" x2="-2.67" y2="-3.09"/>
++   <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-2.67" y1="-3.09" x2="-2.58" y2="-2.8"/>
++   <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-2.72" y1="-2.92" x2="-2.62" y2="-2.92"/>
++
++   <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-2.54" y1="-2.8" x2="-2.55" y2="-3.09"/>
++   <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-2.55" y1="-3.09" x2="-2.4" y2="-3.02"/>
++   <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-2.4" y1="-3.02" x2="-2.55" y2="-2.92"/>
++   <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-2.55" y1="-2.92" x2="-2.4" y2="-2.8"/>
++
++   <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-2.34" y1="-3.09" x2="-2.2" y2="-2.94"/>
++   <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-2.15" y1="-3.06" x2="-2.27" y2="-2.8"/>
++
++   <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-2" y1="-3.09" x2="-1.78" y2="-2.94"/>
++   <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-1.78" y1="-2.94" x2="-2" y2="-2.8"/>
++
++   <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-2" y1="-3.02" x2="-1.89" y2="-2.95"/>
++   <svg:line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="-1.89" y1="-2.95" x2="-2.01" y2="-2.88"/>
++   
++   <svg:text style="fill: #000000; text-anchor:middle; font-family: sans; font-style: normal; font-weight: normal" x="-3.22777" y="-2.32842" font-size="0.8" textLength="1.185">Secondary Actor</svg:text>
++  </svg:svg>
++</shape>
+\ No newline at end of file
+diff --git a/jgoose/resources/shapes/use cases diagram/secondary_actor.png b/jgoose/resources/shapes/use cases diagram/secondary_actor.png
+new file mode 100644
+index 0000000000000000000000000000000000000000..3539daf21867ff82ba22024e3d1ce9f88db9b539
+GIT binary patch
+literal 653
+zcmV;80&@L{P)<h;3K|Lk000e1NJLTq000jF000vR1^@s6Pr_HK00009a7bBm000ie
+z000ie0hKEb8vp<SHfcjcP*7-ZbZ>KLZ*U+<Lqi~Na&Km7Y-Iodc-pOwu}Z^G6hP05
+zqT*011aWY9lPD;*>R`sCEkzKl)gj5&q@hY_5?)@_euSf22N!q0z{yc?Q2YY_Kym8e
+z5Fvwu2%hQO!{u_psMvL<VU%GIYt?Q#()D~f`@{@W0MH4u)NZv70OBN$_`&BZ0^oVm
+zt~(9>#(bD64NQRTZj^-}DnS22ry9f<FoS-oLEHhRI%(HHJOHI$?k_+o$o&l{DcAEs
+zd;n(8^?Weq05iya1u%7VsR3$9I#Or7Q!T5OWl6i61d%)*WjY#Uaz73el_sjAqb`vD
+z2f$*!*ls#<t!i0&>-;mW=gZvQj}U-ZdMsK&I8^7~DvX`q=i<hA84hn@dQ!CAE4bN!
+zh3lfNR-wEF_v0_X#!vm|T2EpC001CkNK#Dz0D2_=0Dyx40Qvs_0D$NK08$750ToyP
+z06Lcd02go9S|5-A007ZRL_t(|+SF9B4Z<)GJUgT#$^tYVfSxur1uegUH^>N4MqmRL
+za82tn5(Bu%21!bkPz4#}$3QB+dg<@(|9!T_G)?$5Bv&A!iioOrWD)92M3uF62LO4V
+zcTLkAJ|+V|mStA}==*-lbzX6WVHno2ogd`7u8+o;ecQGh07%pHCWIK3QkNN{wLX<)
+zd43w(-!T^c8L&Ig9i4N<*H$g^`47pyJ$@b~hrpbG<Ur23!nY|TAUR?ve-)7PD++;Q
+n0ulg{BpGA3DO3|nev<nDN+4ngQ&|kr00000NkvXXu0mjfLx2m*
+
+literal 0
+HcmV?d00001
+
